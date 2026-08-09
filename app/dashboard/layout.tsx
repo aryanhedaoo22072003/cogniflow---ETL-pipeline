@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Home, Workflow, Activity, Plug, ListTree, Clock3,BellRing } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { Home, Workflow, Activity, Plug, ListTree, Clock3, BellRing } from "lucide-react";
 import DbStatusBanner from "@/components/DbStatusBanner";
 
 const nav = [
@@ -44,8 +45,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="mt-auto text-[11px] text-[#5B6480] pt-3 border-t border-[#22304F] px-2.5">
-          v0.3 · Aryan Hedaoo
+        <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-[#22304F] px-2.5">
+          <UserButton
+            appearance={{
+              elements: { avatarBox: "w-6 h-6" },
+            }}
+          />
+          <span className="text-[11px] text-[#5B6480]">v0.4 · signed in</span>
         </div>
       </div>
       <div className="overflow-hidden flex flex-col">

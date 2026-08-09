@@ -1,6 +1,17 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
-export default function Home() {
+const authAppearance = {
+  variables: { colorPrimary: "#8B7FFF", borderRadius: "0.9rem" },
+  elements: {
+    card: "shadow-2xl shadow-black/40 border border-[#2A2E4A]",
+  },
+};
+
+export default async function Home() {
+  const { userId } = await auth();
+
   return (
     <main className="min-h-screen bg-[#0E0F1A] text-[#EAEBF5]">
       <nav className="flex items-center justify-between px-8 h-16 border-b border-[#2A2E4A]">
@@ -8,9 +19,25 @@ export default function Home() {
           <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#8B7FFF] to-[#5B9CF6]" />
           CogniFlow
         </div>
-        <Link href="/dashboard" className="bg-[#8B7FFF] text-[#12102A] font-semibold text-sm px-4 py-2 rounded-lg">
-          Open dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          {userId ? (
+            <>
+              <Link href="/dashboard" className="bg-[#8B7FFF] text-[#12102A] font-semibold text-sm px-4 py-2 rounded-lg">
+                Open dashboard
+              </Link>
+              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+            </>
+          ) : (
+            <>
+              <SignInButton mode="modal" appearance={authAppearance}>
+                <button className="text-[#C4CBDC] font-semibold text-sm px-4 py-2 rounded-lg hover:text-white">Sign in</button>
+              </SignInButton>
+              <SignUpButton mode="modal" appearance={authAppearance}>
+                <button className="bg-[#8B7FFF] text-[#12102A] font-semibold text-sm px-4 py-2 rounded-lg">Get started free</button>
+              </SignUpButton>
+            </>
+          )}
+        </div>
       </nav>
 
       <section className="max-w-3xl mx-auto text-center pt-28 px-6">
@@ -25,12 +52,22 @@ export default function Home() {
           lookup, aggregate, SCD — without the enterprise price tag or the learning curve.
         </p>
         <div className="flex justify-center gap-3">
-          <Link href="/dashboard/designer/new" className="bg-[#8B7FFF] text-[#12102A] font-semibold px-6 py-3 rounded-lg">
-            Start building — it's free
-          </Link>
-          <Link href="/dashboard" className="border border-[#2A2E4A] px-6 py-3 rounded-lg font-medium">
-            View dashboard
-          </Link>
+          {userId ? (
+            <Link href="/dashboard" className="bg-[#8B7FFF] text-[#12102A] font-semibold px-6 py-3 rounded-lg">
+              Go to your dashboard →
+            </Link>
+          ) : (
+            <>
+              <SignUpButton mode="modal" appearance={authAppearance}>
+                <button className="bg-[#8B7FFF] text-[#12102A] font-semibold px-6 py-3 rounded-lg">
+                  Start building — it's free
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal" appearance={authAppearance}>
+                <button className="border border-[#2A2E4A] px-6 py-3 rounded-lg font-medium">Sign in</button>
+              </SignInButton>
+            </>
+          )}
         </div>
       </section>
 
