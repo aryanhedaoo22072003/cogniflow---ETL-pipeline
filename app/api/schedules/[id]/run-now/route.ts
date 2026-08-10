@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Schedule from "@/models/Schedule";
 import { executeAndLogPipeline } from "@/lib/executePipeline";
 import { nextDailyRunUTC } from "@/lib/scheduling";
+import { requireOwnerId } from "@/lib/auth";
 
 function computeNextRun(schedule: any): Date {
   if (schedule.scheduleType === "daily") {
@@ -14,11 +15,12 @@ function computeNextRun(schedule: any): Date {
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const ownerId = await requireOwnerId();
     await connectDB();
     const schedule = await Schedule.findById(id);
-    if (!schedule) return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+    if (!schedule || schedule.ownerId !== ownerId) return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
 
-    const result = await executeAndLogPipeline(schedule.pipelineId, "(scheduled — manual trigger)");
+    const result = await executeAndLogPipeline(schedule.pipelineId, ownerId, "(scheduled — manual trigger)");
     schedule.lastRunAt = new Date();
     schedule.lastStatus = result.status;
     schedule.nextRunAt = computeNextRun(schedule);
@@ -26,6 +28,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ schedule, result });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
   }
 }

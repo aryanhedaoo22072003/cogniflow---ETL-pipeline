@@ -3,25 +3,26 @@ import { connectDB } from "@/lib/mongodb";
 import Schedule from "@/models/Schedule";
 import Pipeline from "@/models/Pipeline";
 import { nextDailyRunUTC } from "@/lib/scheduling";
-
-const DEV_OWNER_ID = "anonymous";
+import { requireOwnerId } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const ownerId = await requireOwnerId();
     await connectDB();
-    const schedules = await Schedule.find({ ownerId: DEV_OWNER_ID }).sort({ createdAt: -1 }).lean();
+    const schedules = await Schedule.find({ ownerId }).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ schedules });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message, schedules: [] }, { status: 500 });
+    return NextResponse.json({ error: e.message, schedules: [] }, { status: e.message === "Not authenticated" ? 401 : 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const ownerId = await requireOwnerId();
     await connectDB();
     const body = await req.json();
     const pipeline = await Pipeline.findById(body.pipelineId).lean<any>();
-    if (!pipeline) return NextResponse.json({ error: "Pipeline not found" }, { status: 404 });
+    if (!pipeline || pipeline.ownerId !== ownerId) return NextResponse.json({ error: "Pipeline not found" }, { status: 404 });
 
     const scheduleType = body.scheduleType === "daily" ? "daily" : "interval";
     let nextRunAt: Date;
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     const schedule = await Schedule.create({
-      ownerId: DEV_OWNER_ID,
+      ownerId,
       pipelineId: body.pipelineId,
       pipelineName: pipeline.name,
       scheduleType,
@@ -53,6 +54,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ schedule }, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
   }
 }
