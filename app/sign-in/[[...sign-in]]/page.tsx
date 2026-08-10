@@ -1,18 +1,11 @@
 import { SignIn } from "@clerk/nextjs";
 import AuthBackground from "@/components/AuthBackground";
+import { clerkAppearancePage } from "@/lib/clerkAppearance";
 
 export default function Page() {
   return (
-    <AuthBackground>
-      <SignIn
-        appearance={{
-          variables: { colorPrimary: "#8B7FFF", borderRadius: "0.9rem" },
-          elements: {
-            card: "shadow-2xl shadow-black/40 border border-[#2A2E4A]",
-            headerTitle: "font-semibold",
-          },
-        }}
-      />
+    <AuthBackground title="Welcome back" subtitle="Sign in to pick up where you left off.">
+      <SignIn appearance={clerkAppearancePage} />
     </AuthBackground>
   );
 }

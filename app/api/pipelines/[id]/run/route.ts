@@ -70,14 +70,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { executeAndLogPipeline } from "@/lib/executePipeline";
+import { requireOwnerId } from "@/lib/auth";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const ownerId = await requireOwnerId();
     await connectDB();
-    const result = await executeAndLogPipeline(id);
+    const result = await executeAndLogPipeline(id, ownerId);
     return NextResponse.json(result);
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
   }
 }

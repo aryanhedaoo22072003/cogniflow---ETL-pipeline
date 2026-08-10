@@ -110,7 +110,6 @@
 //   };
 // }
 
-
 import Pipeline from "@/models/Pipeline";
 import PipelineConnection from "@/models/Connection";
 import Run from "@/models/Run";

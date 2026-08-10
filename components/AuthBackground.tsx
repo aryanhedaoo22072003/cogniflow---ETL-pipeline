@@ -1,8 +1,16 @@
 "use client";
 
-export default function AuthBackground({ children }: { children: React.ReactNode }) {
+export default function AuthBackground({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0B1220] via-[#0E0F1A] to-[#161829] overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0B1220] via-[#0E0F1A] to-[#161829] overflow-hidden py-12">
       <svg className="absolute inset-0 w-full h-full opacity-[0.15]" preserveAspectRatio="none">
         <defs>
           <pattern id="authGrid" width="34" height="34" patternUnits="userSpaceOnUse">
@@ -35,7 +43,15 @@ export default function AuthBackground({ children }: { children: React.ReactNode
         CogniFlow
       </div>
 
-      <div className="relative z-10 animate-fade-up">{children}</div>
+      <div className="relative z-10 animate-fade-up w-full max-w-[400px] px-4">
+        <div className="text-center mb-6">
+          <h1 className="text-white text-[24px] font-semibold mb-1.5" style={{ fontFamily: "'Space Grotesk'" }}>
+            {title}
+          </h1>
+          <p className="text-[#8B8FB0] text-[13.5px]">{subtitle}</p>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }

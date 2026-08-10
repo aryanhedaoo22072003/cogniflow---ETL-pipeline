@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Pipeline from "@/models/Pipeline";
 import { diffPipelineNodes } from "@/lib/diffPipeline";
+import { requireOwnerId } from "@/lib/auth";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const ownerId = await requireOwnerId();
     await connectDB();
     const target = await Pipeline.findById(id).lean<any>();
-    if (!target) return NextResponse.json({ error: "Pipeline not found" }, { status: 404 });
+    if (!target || target.ownerId !== ownerId) return NextResponse.json({ error: "Pipeline not found" }, { status: 404 });
     if (!target.promotedFrom) {
       return NextResponse.json(
         { error: "This pipeline wasn't promoted from another environment, so there's nothing to diff it against." },
@@ -17,14 +19,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const source = await Pipeline.findById(target.promotedFrom).lean<any>();
-    if (!source) {
-      return NextResponse.json(
-        { error: "The source pipeline this was promoted from no longer exists." },
-        { status: 404 }
-      );
+    if (!source || source.ownerId !== ownerId) {
+      return NextResponse.json({ error: "The source pipeline this was promoted from no longer exists." }, { status: 404 });
     }
 
-const diff = diffPipelineNodes(source.nodes, target.nodes);
+    const diff = diffPipelineNodes(source.nodes, target.nodes);
     const summary = {
       added: diff.filter((d) => d.status === "added").length,
       removed: diff.filter((d) => d.status === "removed").length,
@@ -53,6 +52,6 @@ const diff = diffPipelineNodes(source.nodes, target.nodes);
       summary,
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
   }
 }

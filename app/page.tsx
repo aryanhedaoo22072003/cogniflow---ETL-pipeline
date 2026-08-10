@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-
+import { clerkAppearance } from "@/lib/clerkAppearance";
 const authAppearance = {
   variables: { colorPrimary: "#8B7FFF", borderRadius: "0.9rem" },
   elements: {
