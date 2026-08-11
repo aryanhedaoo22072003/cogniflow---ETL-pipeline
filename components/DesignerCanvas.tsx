@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { useRouter } from "next/navigation";
+import { Undo2, Redo2 } from "lucide-react";
 import type { PipelineNode, TransformType, RunLogStep } from "@/lib/transforms";
 import { TRANSFORM_LABELS } from "@/lib/transforms";
 import DataProfileModal from "@/components/DataProfileModal";
@@ -87,6 +88,8 @@ export default function DesignerCanvas({
   const [environment, setEnvironment] = useState(initialPipeline?.environment || "DEV");
   const [headers, setHeaders] = useState<string[]>(initialPipeline?.headers || []);
   const [nodes, setNodes] = useState<PipelineNode[]>(initialPipeline?.nodes || []);
+  const [history, setHistory] = useState<PipelineNode[][]>([]);
+  const [redoStack, setRedoStack] = useState<PipelineNode[][]>([]);
   const [promotedFrom] = useState<string | null>(initialPipeline?.promotedFrom || null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [log, setLog] = useState<RunLogStep[]>([]);
@@ -115,7 +118,52 @@ export default function DesignerCanvas({
     setTimeout(() => setToastMsg(""), 2600);
   }
 
+
+  // Undo/redo tracks structural changes (add/remove/generate) — not every drag
+  // pixel or config keystroke, which would make the stack noisy and useless.
+  // Call pushHistory(nodes) with the PRE-mutation state right before any
+  // structural change.
+  function pushHistory(preChangeNodes: PipelineNode[]) {
+    setHistory((prev) => [...prev.slice(-49), JSON.parse(JSON.stringify(preChangeNodes))]);
+    setRedoStack([]);
+  }
+
+  function undo() {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const prevState = h[h.length - 1];
+      setRedoStack((r) => [...r, JSON.parse(JSON.stringify(nodes))]);
+      setNodes(prevState);
+      setSelectedId(null);
+      return h.slice(0, -1);
+    });
+  }
+
+  function redo() {
+    setRedoStack((r) => {
+      if (r.length === 0) return r;
+      const nextState = r[r.length - 1];
+      setHistory((h) => [...h, JSON.parse(JSON.stringify(nodes))]);
+      setNodes(nextState);
+      setSelectedId(null);
+      return r.slice(0, -1);
+    });
+  }
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [nodes]);
+
   function addNode(type: TransformType) {
+    pushHistory(nodes);
     counter.current += 1;
     const idx = nodes.length;
     const node: PipelineNode = {
@@ -130,7 +178,8 @@ export default function DesignerCanvas({
     setSelectedId(node.id);
   }
 
-    function addSuggestedNodes(suggestions: { type: TransformType; config: Record<string, any> }[]) {
+function addSuggestedNodes(suggestions: { type: TransformType; config: Record<string, any> }[]) {
+    pushHistory(nodes);
     setNodes((prev) => {
       const startIdx = prev.length;
       const added = suggestions.map((s, i) => {
@@ -151,7 +200,8 @@ export default function DesignerCanvas({
     toast(`Added ${suggestions.length} suggested step${suggestions.length !== 1 ? "s" : ""}`);
   }
 
-    function applyGeneratedPipeline(steps: { type: TransformType; config: Record<string, any> }[]) {
+function applyGeneratedPipeline(steps: { type: TransformType; config: Record<string, any> }[]) {
+    pushHistory(nodes);
     setNodes((prev) => {
       // Keep Source nodes as-is, replace everything downstream with the generated chain.
       const sourceNodes = prev.filter((n) => n.type === "source");
@@ -178,7 +228,8 @@ export default function DesignerCanvas({
     setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, config: { ...n.config, ...patch } } : n)));
   }
 
-  function removeNode(id: string) {
+ function removeNode(id: string) {
+    pushHistory(nodes);
     setNodes((prev) => prev.filter((n) => n.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
@@ -528,6 +579,25 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
           {running ? "Running…" : "▶ Run pipeline"}
         </button>
       </div> */}
+
+        <div className="fixed top-3 z-30 flex gap-1.5" style={{ left: (paletteCollapsed ? 52 : 210) + 16 }}>
+        <button
+          onClick={undo}
+          disabled={history.length === 0}
+          title="Undo (Ctrl+Z)"
+          className="w-8 h-8 flex items-center justify-center border border-[#E3E7EF] bg-white rounded-lg text-[#6B7385] hover:border-[#2F6FED] hover:text-[#2F6FED] disabled:opacity-30 disabled:hover:border-[#E3E7EF] disabled:hover:text-[#6B7385]"
+        >
+          <Undo2 size={14} />
+        </button>
+        <button
+          onClick={redo}
+          disabled={redoStack.length === 0}
+          title="Redo (Ctrl+Shift+Z)"
+          className="w-8 h-8 flex items-center justify-center border border-[#E3E7EF] bg-white rounded-lg text-[#6B7385] hover:border-[#2F6FED] hover:text-[#2F6FED] disabled:opacity-30 disabled:hover:border-[#E3E7EF] disabled:hover:text-[#6B7385]"
+        >
+          <Redo2 size={14} />
+        </button>
+      </div>
 
       <div className="fixed top-3 right-6 flex gap-2 z-30">
         {promotedFrom && (
