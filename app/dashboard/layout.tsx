@@ -14,68 +14,38 @@ const nav = [
   { href: "/dashboard/alerts", label: "Alerts", icon: BellRing },
 ];
 
-// Dark-theme base gets us sane contrast/spacing defaults for free (same trick
-// as clerkAppearance.ts), then these overrides pull the specific pieces —
-// trigger button, popover card, action rows — in line with the sidebar.
 const orgSwitcherAppearance = {
   baseTheme: dark,
   variables: {
     colorPrimary: "#8B7FFF",
     colorBackground: "#161829",
     colorInputBackground: "#0E0F1A",
-    colorText: "#EAEBF5",
-    colorTextSecondary: "#9AA1B2",
+    colorText: "#FFFFFF",
+    colorTextSecondary: "#FFFFFF",
     borderRadius: "0.65rem",
     fontSize: "13px",
   },
   elements: {
-  rootBox: "w-full",
-
-  organizationSwitcherTrigger:
-    "w-full flex items-center gap-2 bg-[#1B2740] border border-[#2A3752] rounded-lg px-2.5 py-2 hover:bg-[#212D4C] hover:border-[#3A4A78] transition-colors justify-between !text-[#EAEBF5] [&_*]:!text-[#EAEBF5]",
-
-  organizationSwitcherTriggerIcon:
-    "!text-[#9AA1B2] w-3.5 h-3.5",
-
-  organizationPreviewMainIdentifier:
-    "!text-[#EAEBF5] text-[13px] font-semibold",
-
-  organizationPreviewSecondaryIdentifier:
-    "!text-[#9AA1B2] text-[11px] font-medium",
-
-  organizationPreviewAvatarBox:
-    "w-7 h-7 rounded-md",
-
-  organizationPreviewTextContainer:
-    "gap-0.5",
-
-  organizationSwitcherPopoverCard:
-    "bg-[#161829] border border-[#2A2E4A] shadow-2xl shadow-black/60 rounded-xl mt-2 w-[280px]",
-
-  organizationSwitcherPopoverMain:
-    "p-2",
-
-  organizationSwitcherPreviewButton:
-    "rounded-lg hover:bg-[#1F2740] px-2.5 py-2.5 w-full !text-[#EAEBF5]",
-
-  organizationSwitcherPopoverActionButton:
-    "rounded-lg hover:bg-[#1F2740] px-2.5 py-2.5 !text-[#EAEBF5] text-[13px] font-medium w-full",
-
-  organizationSwitcherPopoverActionButtonIcon:
-    "!text-[#8B7FFF] w-4 h-4",
-
-  organizationSwitcherPopoverActionButtonText:
-    "!text-[#EAEBF5] text-[13px] font-medium",
-
-  organizationSwitcherPopoverFooter:
-    "border-t border-[#2A2E4A] px-2 py-2",
-
-  membershipBadge:
-    "bg-[#8B7FFF22] !text-[#B7ADFF] text-[10px] rounded-full px-2 py-0.5 font-medium",
-
-  organizationSwitcherPopoverInvitationActionsBox:
-    "px-2",
-},
+    rootBox: "w-full",
+    organizationSwitcherTrigger:
+      "w-full flex items-center gap-2 bg-[#1B2740] border border-[#2A3752] rounded-lg px-2.5 py-2 hover:bg-[#212D4C] hover:border-[#3A4A78] transition-colors justify-between text-white",
+    organizationSwitcherTriggerIcon: "text-white w-3.5 h-3.5",
+    organizationPreviewMainIdentifier: "text-white text-[13px] font-semibold",
+    organizationPreviewSecondaryIdentifier: "text-white  text-[11px] font-medium",
+    organizationPreviewAvatarBox: "w-7 h-7 rounded-md",
+    organizationPreviewTextContainer: "gap-0.5",
+    organizationSwitcherPopoverCard:
+      "bg-[#161829] border border-[#2A2E4A] shadow-2xl shadow-black/60 rounded-xl mt-2 w-[280px]",
+    organizationSwitcherPopoverMain: "p-2",
+    organizationSwitcherPreviewButton: "rounded-lg hover:bg-[#1F2740] px-2.5 py-2.5 w-full text-white",
+    organizationSwitcherPopoverActionButton:
+      "rounded-lg hover:bg-[#1F2740] px-2.5 py-2.5 text-white text-[13px] font-medium w-full",
+    organizationSwitcherPopoverActionButtonIcon: "text-white w-4 h-4",
+    organizationSwitcherPopoverActionButtonText: "text-white",
+    organizationSwitcherPopoverFooter: "border-t border-[#2A2E4A] px-2 py-2",
+    membershipBadge: "bg-[#8B7FFF33] text-white text-[10px] rounded-full px-2 py-0.5 font-medium",
+    organizationSwitcherPopoverInvitationActionsBox: "px-2",
+  },
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
