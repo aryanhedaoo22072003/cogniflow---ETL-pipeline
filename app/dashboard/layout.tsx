@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
-import { Home, Workflow, Activity, Plug, ListTree, Clock3, BellRing } from "lucide-react";
+import { Home, Workflow, Activity, Plug, ListTree, Clock3, BellRing, LayoutTemplate, KeyRound } from "lucide-react";
 import DbStatusBanner from "@/components/DbStatusBanner";
 
 const nav = [
@@ -12,6 +12,7 @@ const nav = [
   { href: "/dashboard/monitor", label: "Monitor", icon: Activity },
   { href: "/dashboard/connections", label: "Connections", icon: Plug },
   { href: "/dashboard/alerts", label: "Alerts", icon: BellRing },
+  { href: "/dashboard/api-keys", label: "API Keys", icon: KeyRound },
 ];
 
 const orgSwitcherAppearance = {
