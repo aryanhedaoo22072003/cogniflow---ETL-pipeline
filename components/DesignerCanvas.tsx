@@ -9,6 +9,7 @@ import { TRANSFORM_LABELS } from "@/lib/transforms";
 import DataProfileModal from "@/components/DataProfileModal";
 import AiSuggestModal from "@/components/AiSuggestModal";
 import AiGeneratePipelineModal from "@/components/AiGeneratePipelineModal";
+import CopilotChat, { CopilotOperation } from "@/components/CopilotChat";
 
 type Row = Record<string, any>;
 
@@ -103,6 +104,7 @@ export default function DesignerCanvas({
   const [profileModalNodeId, setProfileModalNodeId] = useState<string | null>(null);
   const [aiSuggestNodeId, setAiSuggestNodeId] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showCopilot, setShowCopilot] = useState(false);
   const counter = useRef(0);
   const dragState = useRef<{ id: string; startX: number; startY: number; ox: number; oy: number } | null>(null);
 
@@ -220,8 +222,37 @@ function applyGeneratedPipeline(steps: { type: TransformType; config: Record<str
       });
       return [...sourceNodes, ...generated];
     });
-    setSelectedId(null);
+setSelectedId(null);
     toast(`Generated a ${steps.length}-step pipeline`);
+  }
+
+  function applyCopilotOperations(ops: CopilotOperation[]) {
+    pushHistory(nodes);
+    setNodes((prev) => {
+      let current = [...prev];
+      for (const op of ops) {
+        if (op.op === "add" && op.type) {
+          counter.current += 1;
+          const idx = current.length;
+          current.push({
+            id: `n${counter.current}_${Date.now()}`,
+            type: op.type,
+            label: TRANSFORM_LABELS[op.type],
+            x: 40 + (idx % 4) * 220,
+            y: 30 + Math.floor(idx / 4) * 150,
+            config: { ...defaultConfig(op.type, headers), ...op.config },
+          });
+        } else if (op.op === "remove" && op.nodeId) {
+          current = current.filter((n) => n.id !== op.nodeId);
+        } else if (op.op === "update" && op.nodeId) {
+          current = current.map((n) =>
+            n.id === op.nodeId ? { ...n, config: { ...n.config, ...op.config } } : n
+          );
+        }
+      }
+      return current;
+    });
+    toast(`Applied ${ops.length} change${ops.length !== 1 ? "s" : ""} from copilot`);
   }
 
   function updateNodeConfig(id: string, patch: Record<string, any>) {
@@ -618,6 +649,16 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
         >
           ✨ Generate from prompt
         </button>
+        <button
+          onClick={() => setShowCopilot((v) => !v)}
+          className={`text-xs font-semibold border rounded-lg px-3.5 py-2 flex items-center gap-1.5 transition-colors ${
+            showCopilot
+              ? "border-[#7C6AE8] bg-[#7C6AE8] text-white"
+              : "border-[#7C6AE8] text-[#7C6AE8] bg-white hover:bg-[#7C6AE814]"
+          }`}
+        >
+          💬 {showCopilot ? "Close copilot" : "Copilot"}
+        </button>
         {environment !== "PROD" && (
           <button onClick={promotePipeline} disabled={promoting} className="text-xs font-semibold border border-[#D98A1E] text-[#D98A1E] bg-white rounded-lg px-3.5 py-2 hover:bg-[#D98A1E14] disabled:opacity-50">
             {promoting ? "Promoting…" : `Promote to ${environment === "DEV" ? "SIT" : "PROD"} →`}
@@ -640,13 +681,13 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
             </div>
           </div>
           <div className="overflow-auto p-3" style={{ maxHeight: 200 }}>
-            <table className="text-xs w-full">
-              <thead>
-                <tr>{preview.headers.map((h) => <th key={h} className="text-left px-2.5 py-1.5 text-[#2F6FED] font-mono font-medium whitespace-nowrap">{h}</th>)}</tr>
-              </thead>
+<table className="text-xs w-full">
+  <thead>
+    <tr>{preview.headers.map((h, hi) => <th key={`${h}_${hi}`} className="text-left px-2.5 py-1.5 text-[#2F6FED] font-mono font-medium whitespace-nowrap">{h}</th>)}</tr>
+  </thead>
               <tbody>
                 {preview.rows.slice(0, 25).map((r, i) => (
-                  <tr key={i}>{preview.headers.map((h) => <td key={h} className="px-2.5 py-1.5 text-[#6B7385] whitespace-nowrap border-t border-[#F0F2F6]">{String(r[h] ?? "")}</td>)}</tr>
+                   <tr key={i}>{preview.headers.map((h, hi) => <td key={`${h}_${hi}`} className="px-2.5 py-1.5 text-[#6B7385] whitespace-nowrap border-t border-[#F0F2F6]">{String(r[h] ?? "")}</td>)}</tr>
                 ))}
               </tbody>
             </table>
@@ -701,6 +742,15 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
           />
         );
       })()}
+
+            {showCopilot && (
+        <CopilotChat
+          nodes={nodes}
+          headers={headers}
+          onApplyOperations={applyCopilotOperations}
+          onClose={() => setShowCopilot(false)}
+        />
+      )}
     </div>
   );
 }
