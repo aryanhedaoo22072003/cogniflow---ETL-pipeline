@@ -219,51 +219,102 @@ export function applyTransform(
     //   };
     // }
 
-    case "expression": {
-      // Support both old single-column shape { name, expr } and new
-      // multi-column shape { columns: [{name, expr}] } — backwards compatible.
-      const columns: { name: string; expr: string }[] =
-        cfg.columns?.length
+ case "expression": {
+      // Full IICS-style Expression transform with 4 port types:
+      // 1. Input ports   — upstream columns (read-only, just for reference display)
+      // 2. Variable ports — intermediate computed values, NOT in output
+      // 3. Output ports  — new columns added to the output row
+      // 4. Input macros  — named constants/parameters usable in expressions
+      // 5. Output macros — parameterized outputs derived from expressions
+
+      // Backwards compatibility with old single-column shape { name, expr }
+      const outputPorts: { name: string; expr: string }[] =
+        cfg.outputPorts?.length
+          ? cfg.outputPorts
+          : cfg.columns?.length
           ? cfg.columns
           : cfg.name
           ? [{ name: cfg.name, expr: cfg.expr || "" }]
           : [];
 
-      if (columns.length === 0) {
-        return { rows, headers, ok: true, message: "no expression columns configured" };
+      const variablePorts: { name: string; expr: string }[] = cfg.variablePorts || [];
+      const inputMacros: { name: string; value: string }[] = cfg.inputMacros || [];
+      const outputMacros: { name: string; expr: string }[] = cfg.outputMacros || [];
+
+      if (outputPorts.length === 0 && outputMacros.length === 0) {
+        return { rows, headers, ok: true, message: "no output ports configured" };
+      }
+
+      // Build a macro lookup map for use inside expressions
+      const macroMap: Record<string, any> = {};
+      for (const m of inputMacros) {
+        if (m.name) macroMap[m.name] = m.value;
       }
 
       let currentHeaders = [...headers];
       const out = rows.map((r) => {
         const result = { ...r };
-        for (const col of columns) {
+        // Merge macro values into the evaluation scope
+        const scope = { ...r, ...macroMap };
+
+        // Step 1: compute variable ports first (they can be used by output ports)
+        const varScope: Record<string, any> = { ...scope };
+        for (const v of variablePorts) {
+          if (!v.name || !v.expr) continue;
+          try {
+            const fn = new Function(...Object.keys(varScope), `return (${v.expr})`);
+            varScope[v.name] = fn(...Object.values(varScope));
+          } catch {
+            varScope[v.name] = null;
+          }
+          // Variables are NOT written to the output row
+        }
+
+        // Step 2: compute output ports (can use variables and macros)
+        for (const col of outputPorts) {
           if (!col.name || !col.expr) continue;
           try {
-            const fn = new Function(...Object.keys(r), `return (${col.expr})`);
-            result[col.name] = fn(...Object.values(r));
+            const fn = new Function(...Object.keys(varScope), `return (${col.expr})`);
+            result[col.name] = fn(...Object.values(varScope));
           } catch {
             result[col.name] = null;
           }
         }
+
+        // Step 3: compute output macros (parameterized outputs)
+        for (const col of outputMacros) {
+          if (!col.name || !col.expr) continue;
+          try {
+            const fn = new Function(...Object.keys(varScope), `return (${col.expr})`);
+            result[col.name] = fn(...Object.values(varScope));
+          } catch {
+            result[col.name] = null;
+          }
+        }
+
         return result;
       });
 
-      // Add any new column names to headers
-      for (const col of columns) {
+      // Add new column names to headers
+      for (const col of [...outputPorts, ...outputMacros]) {
         if (col.name && !currentHeaders.includes(col.name)) {
           currentHeaders.push(col.name);
         }
       }
 
-      const addedNames = columns.filter((c) => c.name).map((c) => c.name).join(", ");
+      const allOutputNames = [...outputPorts, ...outputMacros]
+        .filter((c) => c.name)
+        .map((c) => c.name)
+        .join(", ");
+
       return {
         rows: out,
         headers: currentHeaders,
         ok: true,
-        message: `added column${columns.length !== 1 ? "s" : ""}: ${addedNames}`,
+        message: `expression: added ${[...outputPorts, ...outputMacros].filter(c => c.name).length} output column(s)${variablePorts.length ? `, ${variablePorts.length} variable(s)` : ""}`,
       };
     }
-    case "sequence": {
+       case "sequence": {
       const { outputColumn, startAt, step } = cfg;
       const col = outputColumn || "seq_id";
       const start = Number.isFinite(startAt) ? Number(startAt) : 1;

@@ -49,7 +49,13 @@ function defaultConfig(type: TransformType, headers: string[]): Record<string, a
     case "nulls":
       return { column: headers[0] || "", strategy: "drop_row" };
     case "expression":
-      return { name: "new_column", expr: "" };
+      return {
+        outputPorts: [{ name: "", expr: "" }],
+        variablePorts: [],
+        inputMacros: [],
+        outputMacros: [],
+        _tab: "output",
+      };
     case "sequence":
       return { outputColumn: "seq_id", startAt: 1, step: 1 };
     case "sorter":
@@ -922,82 +928,228 @@ function NodeInspector({
 
     {node.type === "expression" && (
         <>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] uppercase tracking-wide text-[#9AA1B2] font-semibold">Output ports</label>
-            <button
-              onClick={() => {
-                const cols = cfg.columns?.length
-                  ? cfg.columns
-                  : cfg.name
-                  ? [{ name: cfg.name, expr: cfg.expr || "" }]
-                  : [];
-                onChange({ columns: [...cols, { name: "", expr: "" }], name: undefined, expr: undefined });
-              }}
-              className="text-xs font-semibold text-[#2F6FED] hover:underline"
-            >
-              + Add port
-            </button>
-          </div>
-
+          {/* Tab bar */}
           {(() => {
-            const cols: { name: string; expr: string }[] =
-              cfg.columns?.length
-                ? cfg.columns
-                : cfg.name
-                ? [{ name: cfg.name, expr: cfg.expr || "" }]
-                : [{ name: "", expr: "" }];
+            const tab = cfg._tab || "output";
+            const setTab = (t: string) => onChange({ _tab: t });
+
+            const outputPorts: { name: string; expr: string }[] =
+              cfg.outputPorts?.length ? cfg.outputPorts
+              : cfg.columns?.length ? cfg.columns
+              : cfg.name ? [{ name: cfg.name, expr: cfg.expr || "" }]
+              : [{ name: "", expr: "" }];
+
+            const variablePorts: { name: string; expr: string }[] = cfg.variablePorts || [];
+            const inputMacros: { name: string; value: string; description?: string }[] = cfg.inputMacros || [];
+            const outputMacros: { name: string; expr: string }[] = cfg.outputMacros || [];
+
+            const tabs = [
+              { key: "input", label: "Input ports", count: headers.length },
+              { key: "output", label: "Output ports", count: outputPorts.filter(p => p.name).length },
+              { key: "variable", label: "Variable ports", count: variablePorts.filter(p => p.name).length },
+              { key: "imacro", label: "Input macros", count: inputMacros.filter(p => p.name).length },
+              { key: "omacro", label: "Output macros", count: outputMacros.filter(p => p.name).length },
+            ];
 
             return (
-              <div className="space-y-3">
-                {cols.map((col, i) => (
-                  <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide">Port {i + 1}</span>
-                      {cols.length > 1 && (
-                        <button
-                          onClick={() => {
-                            const updated = cols.filter((_, ci) => ci !== i);
-                            onChange({ columns: updated, name: undefined, expr: undefined });
-                          }}
-                          className="text-[10px] text-[#9AA1B2] hover:text-red-500"
-                        >
-                          ✕ Remove
-                        </button>
+              <div>
+                {/* Tabs */}
+                <div className="flex gap-1 flex-wrap mb-3">
+                  {tabs.map((t) => (
+                    <button
+                      key={t.key}
+                      onClick={() => setTab(t.key)}
+                      className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-md border transition-colors ${
+                        tab === t.key
+                          ? "border-[#2F6FED] bg-[#2F6FED14] text-[#2F6FED]"
+                          : "border-[#E3E7EF] text-[#6B7385] hover:border-[#2F6FED]"
+                      }`}
+                    >
+                      {t.label}
+                      {t.count > 0 && (
+                        <span className="ml-1 text-[9px] bg-[#E3E7EF] text-[#6B7385] rounded-full px-1.5 py-0.5">{t.count}</span>
                       )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <input
-                        className={selectCls}
-                        value={col.name}
-                        placeholder="Output column name"
-                        onChange={(e) => {
-                          const updated = cols.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
-                          onChange({ columns: updated, name: undefined, expr: undefined });
-                        }}
-                      />
-                      <input
-                        className={`${selectCls} font-mono text-[11.5px]`}
-                        value={col.expr}
-                        placeholder="e.g. first_name + ' ' + last_name"
-                        onChange={(e) => {
-                          const updated = cols.map((c, ci) => ci === i ? { ...c, expr: e.target.value } : c);
-                          onChange({ columns: updated, name: undefined, expr: undefined });
-                        }}
-                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* INPUT PORTS — read-only reference */}
+                {tab === "input" && (
+                  <div>
+                    <p className="text-[11px] text-[#6B7385] mb-2">Incoming columns from upstream — available as variables in all expressions.</p>
+                    <div className="space-y-1">
+                      {headers.length === 0 && <p className="text-[11px] text-[#9AA1B2]">No upstream columns yet — attach a Source first.</p>}
+                      {headers.map((h) => (
+                        <div key={h} className="flex items-center gap-2 bg-[#FAFBFD] border border-[#E3E7EF] rounded-lg px-2.5 py-1.5">
+                          <span className="w-2 h-2 rounded-full bg-[#5B9CF6] flex-shrink-0" />
+                          <span className="text-[12px] font-mono text-[#1A2233]">{h}</span>
+                          <span className="ml-auto text-[10px] text-[#9AA1B2]">input</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* OUTPUT PORTS */}
+                {tab === "output" && (
+                  <div>
+                    <p className="text-[11px] text-[#6B7385] mb-2">New columns added to the output row. Use any input column name or variable port name as a variable.</p>
+                    <div className="space-y-2.5 mb-2">
+                      {outputPorts.map((col, i) => (
+                        <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#1FA971]" /> Output {i + 1}
+                            </span>
+                            {outputPorts.length > 1 && (
+                              <button onClick={() => {
+                                const updated = outputPorts.filter((_, ci) => ci !== i);
+                                onChange({ outputPorts: updated, name: undefined, expr: undefined, columns: undefined });
+                              }} className="text-[10px] text-[#9AA1B2] hover:text-red-500">✕</button>
+                            )}
+                          </div>
+                          <input className={`${selectCls} mb-1`} value={col.name} placeholder="Output column name" onChange={(e) => {
+                            const updated = outputPorts.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
+                            onChange({ outputPorts: updated, name: undefined, expr: undefined, columns: undefined });
+                          }} />
+                          <input className={`${selectCls} font-mono text-[11.5px]`} value={col.expr} placeholder="e.g. salary * 1.1" onChange={(e) => {
+                            const updated = outputPorts.map((c, ci) => ci === i ? { ...c, expr: e.target.value } : c);
+                            onChange({ outputPorts: updated, name: undefined, expr: undefined, columns: undefined });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onChange({ outputPorts: [...outputPorts, { name: "", expr: "" }], name: undefined, expr: undefined, columns: undefined })}
+                      className="w-full text-xs font-semibold border border-dashed border-[#E3E7EF] rounded-lg py-2 hover:border-[#2F6FED] hover:text-[#2F6FED]">
+                      + Add output port
+                    </button>
+                  </div>
+                )}
+
+                {/* VARIABLE PORTS */}
+                {tab === "variable" && (
+                  <div>
+                    <p className="text-[11px] text-[#6B7385] mb-2">Intermediate computed values — usable in output port expressions but NOT added to the output row. Like local variables in IICS.</p>
+                    <div className="space-y-2.5 mb-2">
+                      {variablePorts.length === 0 && (
+                        <p className="text-[11px] text-[#9AA1B2]">No variable ports yet.</p>
+                      )}
+                      {variablePorts.map((col, i) => (
+                        <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#D98A1E]" /> Variable {i + 1}
+                            </span>
+                            <button onClick={() => {
+                              const updated = variablePorts.filter((_, ci) => ci !== i);
+                              onChange({ variablePorts: updated });
+                            }} className="text-[10px] text-[#9AA1B2] hover:text-red-500">✕</button>
+                          </div>
+                          <input className={`${selectCls} mb-1`} value={col.name} placeholder="Variable name (not in output)" onChange={(e) => {
+                            const updated = variablePorts.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
+                            onChange({ variablePorts: updated });
+                          }} />
+                          <input className={`${selectCls} font-mono text-[11.5px]`} value={col.expr} placeholder="e.g. salary * 12" onChange={(e) => {
+                            const updated = variablePorts.map((c, ci) => ci === i ? { ...c, expr: e.target.value } : c);
+                            onChange({ variablePorts: updated });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onChange({ variablePorts: [...variablePorts, { name: "", expr: "" }] })}
+                      className="w-full text-xs font-semibold border border-dashed border-[#E3E7EF] rounded-lg py-2 hover:border-[#D98A1E] hover:text-[#D98A1E]">
+                      + Add variable port
+                    </button>
+                  </div>
+                )}
+
+                {/* INPUT MACROS */}
+                {tab === "imacro" && (
+                  <div>
+                    <p className="text-[11px] text-[#6B7385] mb-2">Named constants or parameters — define a value once, reference it by name in any expression. Like $$parameter in IICS.</p>
+                    <div className="space-y-2.5 mb-2">
+                      {inputMacros.length === 0 && (
+                        <p className="text-[11px] text-[#9AA1B2]">No input macros yet.</p>
+                      )}
+                      {inputMacros.map((m, i) => (
+                        <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#7C6AE8]" /> Macro {i + 1}
+                            </span>
+                            <button onClick={() => {
+                              const updated = inputMacros.filter((_, ci) => ci !== i);
+                              onChange({ inputMacros: updated });
+                            }} className="text-[10px] text-[#9AA1B2] hover:text-red-500">✕</button>
+                          </div>
+                          <input className={`${selectCls} mb-1`} value={m.name} placeholder="Macro name (use in expressions)" onChange={(e) => {
+                            const updated = inputMacros.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
+                            onChange({ inputMacros: updated });
+                          }} />
+                          <input className={`${selectCls}`} value={m.value} placeholder="Value (e.g. 0.18 for tax rate)" onChange={(e) => {
+                            const updated = inputMacros.map((c, ci) => ci === i ? { ...c, value: e.target.value } : c);
+                            onChange({ inputMacros: updated });
+                          }} />
+                          <input className={`${selectCls} mt-1 text-[11px] text-[#9AA1B2]`} value={m.description || ""} placeholder="Description (optional)" onChange={(e) => {
+                            const updated = inputMacros.map((c, ci) => ci === i ? { ...c, description: e.target.value } : c);
+                            onChange({ inputMacros: updated });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onChange({ inputMacros: [...inputMacros, { name: "", value: "", description: "" }] })}
+                      className="w-full text-xs font-semibold border border-dashed border-[#E3E7EF] rounded-lg py-2 hover:border-[#7C6AE8] hover:text-[#7C6AE8]">
+                      + Add input macro
+                    </button>
+                  </div>
+                )}
+
+                {/* OUTPUT MACROS */}
+                {tab === "omacro" && (
+                  <div>
+                    <p className="text-[11px] text-[#6B7385] mb-2">Parameterized output columns — like output ports but intended for reusable, parameterized transformations. Added to output row.</p>
+                    <div className="space-y-2.5 mb-2">
+                      {outputMacros.length === 0 && (
+                        <p className="text-[11px] text-[#9AA1B2]">No output macros yet.</p>
+                      )}
+                      {outputMacros.map((col, i) => (
+                        <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#DA4B4B]" /> Output macro {i + 1}
+                            </span>
+                            <button onClick={() => {
+                              const updated = outputMacros.filter((_, ci) => ci !== i);
+                              onChange({ outputMacros: updated });
+                            }} className="text-[10px] text-[#9AA1B2] hover:text-red-500">✕</button>
+                          </div>
+                          <input className={`${selectCls} mb-1`} value={col.name} placeholder="Output column name" onChange={(e) => {
+                            const updated = outputMacros.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
+                            onChange({ outputMacros: updated });
+                          }} />
+                          <input className={`${selectCls} font-mono text-[11.5px]`} value={col.expr} placeholder="e.g. salary * TAX_RATE" onChange={(e) => {
+                            const updated = outputMacros.map((c, ci) => ci === i ? { ...c, expr: e.target.value } : c);
+                            onChange({ outputMacros: updated });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onChange({ outputMacros: [...outputMacros, { name: "", expr: "" }] })}
+                      className="w-full text-xs font-semibold border border-dashed border-[#E3E7EF] rounded-lg py-2 hover:border-[#DA4B4B] hover:text-[#DA4B4B]">
+                      + Add output macro
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-3 pt-2.5 border-t border-[#E3E7EF] text-[11px] text-[#9AA1B2] leading-relaxed">
+                  <strong className="text-[#6B7385]">Execution order:</strong> Input macros → Variable ports → Output ports → Output macros.
+                  Variables can reference input columns and macros. Output ports can reference variables, input columns, and macros.
+                </div>
               </div>
             );
           })()}
-
-          <p className="text-[11px] text-[#6B7385] mt-2 leading-relaxed">
-            Each port adds one new column. Use any existing column name as a variable — pure JS expressions.
-            <br/>Example: <span className="font-mono bg-[#F4F6FA] px-1 rounded">salary * 1.1</span> or <span className="font-mono bg-[#F4F6FA] px-1 rounded">first_name + ' ' + last_name</span>
-          </p>
         </>
       )}
-
 
       {node.type === "sequence" && (
         <>
