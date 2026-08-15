@@ -195,30 +195,74 @@ export function applyTransform(
       };
     }
 
+    // case "expression": {
+    //   const { name, expr } = cfg;
+    //   if (!expr) return { rows, headers, ok: true, message: "no expression set, skipped" };
+    //   let errCount = 0;
+    //   const out = rows.map((r) => {
+    //     const copy = { ...r };
+    //     try {
+    //       copy[name] = evalExpression(expr, r);
+    //     } catch {
+    //       copy[name] = null;
+    //       errCount++;
+    //     }
+    //     return copy;
+    //   });
+    //   const newHeaders = headers.includes(name) ? headers : [...headers, name];
+    //   return {
+    //     rows: out,
+    //     headers: newHeaders,
+    //     ok: errCount === 0,
+    //     message:
+    //       errCount > 0 ? `added ${name} (${errCount} rows failed to evaluate)` : `added column ${name}`,
+    //   };
+    // }
+
     case "expression": {
-      const { name, expr } = cfg;
-      if (!expr) return { rows, headers, ok: true, message: "no expression set, skipped" };
-      let errCount = 0;
+      // Support both old single-column shape { name, expr } and new
+      // multi-column shape { columns: [{name, expr}] } — backwards compatible.
+      const columns: { name: string; expr: string }[] =
+        cfg.columns?.length
+          ? cfg.columns
+          : cfg.name
+          ? [{ name: cfg.name, expr: cfg.expr || "" }]
+          : [];
+
+      if (columns.length === 0) {
+        return { rows, headers, ok: true, message: "no expression columns configured" };
+      }
+
+      let currentHeaders = [...headers];
       const out = rows.map((r) => {
-        const copy = { ...r };
-        try {
-          copy[name] = evalExpression(expr, r);
-        } catch {
-          copy[name] = null;
-          errCount++;
+        const result = { ...r };
+        for (const col of columns) {
+          if (!col.name || !col.expr) continue;
+          try {
+            const fn = new Function(...Object.keys(r), `return (${col.expr})`);
+            result[col.name] = fn(...Object.values(r));
+          } catch {
+            result[col.name] = null;
+          }
         }
-        return copy;
+        return result;
       });
-      const newHeaders = headers.includes(name) ? headers : [...headers, name];
+
+      // Add any new column names to headers
+      for (const col of columns) {
+        if (col.name && !currentHeaders.includes(col.name)) {
+          currentHeaders.push(col.name);
+        }
+      }
+
+      const addedNames = columns.filter((c) => c.name).map((c) => c.name).join(", ");
       return {
         rows: out,
-        headers: newHeaders,
-        ok: errCount === 0,
-        message:
-          errCount > 0 ? `added ${name} (${errCount} rows failed to evaluate)` : `added column ${name}`,
+        headers: currentHeaders,
+        ok: true,
+        message: `added column${columns.length !== 1 ? "s" : ""}: ${addedNames}`,
       };
     }
-
     case "sequence": {
       const { outputColumn, startAt, step } = cfg;
       const col = outputColumn || "seq_id";

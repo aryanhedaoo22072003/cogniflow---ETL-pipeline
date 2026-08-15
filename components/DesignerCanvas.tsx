@@ -920,10 +920,81 @@ function NodeInspector({
         </>
       )}
 
-      {node.type === "expression" && (
+    {node.type === "expression" && (
         <>
-          <Field label="New column name"><input className={selectCls} value={cfg.name || ""} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. total_price" /></Field>
-          <Field label="Expression (use column names as variables)"><input className={selectCls} value={cfg.expr || ""} onChange={(e) => onChange({ expr: e.target.value })} placeholder="e.g. price * quantity" /></Field>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[10px] uppercase tracking-wide text-[#9AA1B2] font-semibold">Output ports</label>
+            <button
+              onClick={() => {
+                const cols = cfg.columns?.length
+                  ? cfg.columns
+                  : cfg.name
+                  ? [{ name: cfg.name, expr: cfg.expr || "" }]
+                  : [];
+                onChange({ columns: [...cols, { name: "", expr: "" }], name: undefined, expr: undefined });
+              }}
+              className="text-xs font-semibold text-[#2F6FED] hover:underline"
+            >
+              + Add port
+            </button>
+          </div>
+
+          {(() => {
+            const cols: { name: string; expr: string }[] =
+              cfg.columns?.length
+                ? cfg.columns
+                : cfg.name
+                ? [{ name: cfg.name, expr: cfg.expr || "" }]
+                : [{ name: "", expr: "" }];
+
+            return (
+              <div className="space-y-3">
+                {cols.map((col, i) => (
+                  <div key={i} className="border border-[#E3E7EF] rounded-lg p-2.5 bg-[#FAFBFD]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono text-[#9AA1B2] uppercase tracking-wide">Port {i + 1}</span>
+                      {cols.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const updated = cols.filter((_, ci) => ci !== i);
+                            onChange({ columns: updated, name: undefined, expr: undefined });
+                          }}
+                          className="text-[10px] text-[#9AA1B2] hover:text-red-500"
+                        >
+                          ✕ Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <input
+                        className={selectCls}
+                        value={col.name}
+                        placeholder="Output column name"
+                        onChange={(e) => {
+                          const updated = cols.map((c, ci) => ci === i ? { ...c, name: e.target.value } : c);
+                          onChange({ columns: updated, name: undefined, expr: undefined });
+                        }}
+                      />
+                      <input
+                        className={`${selectCls} font-mono text-[11.5px]`}
+                        value={col.expr}
+                        placeholder="e.g. first_name + ' ' + last_name"
+                        onChange={(e) => {
+                          const updated = cols.map((c, ci) => ci === i ? { ...c, expr: e.target.value } : c);
+                          onChange({ columns: updated, name: undefined, expr: undefined });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          <p className="text-[11px] text-[#6B7385] mt-2 leading-relaxed">
+            Each port adds one new column. Use any existing column name as a variable — pure JS expressions.
+            <br/>Example: <span className="font-mono bg-[#F4F6FA] px-1 rounded">salary * 1.1</span> or <span className="font-mono bg-[#F4F6FA] px-1 rounded">first_name + ' ' + last_name</span>
+          </p>
         </>
       )}
 
