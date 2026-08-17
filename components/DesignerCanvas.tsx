@@ -1,3 +1,4 @@
+/*------change the dashboard need to add dark mode */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
