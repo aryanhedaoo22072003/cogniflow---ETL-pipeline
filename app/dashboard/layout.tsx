@@ -3,10 +3,12 @@ import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { Home, Workflow, Activity, Plug, ListTree, Clock3, BellRing, LayoutTemplate, KeyRound } from "lucide-react";
 import DbStatusBanner from "@/components/DbStatusBanner";
+import { ThemeToggle } from "@/components/ThemeProvider";
 
 const nav = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/dashboard/pipelines", label: "Data Integration", icon: Workflow },
+  { href: "/dashboard/templates", label: "Templates", icon: LayoutTemplate },
   { href: "/dashboard/taskflows", label: "Taskflows", icon: ListTree },
   { href: "/dashboard/schedules", label: "Schedules", icon: Clock3 },
   { href: "/dashboard/monitor", label: "Monitor", icon: Activity },
@@ -32,7 +34,7 @@ const orgSwitcherAppearance = {
       "w-full flex items-center gap-2 bg-[#1B2740] border border-[#2A3752] rounded-lg px-2.5 py-2 hover:bg-[#212D4C] hover:border-[#3A4A78] transition-colors justify-between text-white",
     organizationSwitcherTriggerIcon: "text-white w-3.5 h-3.5",
     organizationPreviewMainIdentifier: "text-white text-[13px] font-semibold",
-    organizationPreviewSecondaryIdentifier: "text-white  text-[11px] font-medium",
+    organizationPreviewSecondaryIdentifier: "text-white text-[11px] font-medium",
     organizationPreviewAvatarBox: "w-7 h-7 rounded-md",
     organizationPreviewTextContainer: "gap-0.5",
     organizationSwitcherPopoverCard:
@@ -51,13 +53,16 @@ const orgSwitcherAppearance = {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[220px_1fr] h-screen bg-[#F4F6FA] text-[#1A2233]">
+    <div className="grid grid-cols-[220px_1fr] h-screen bg-[#F4F6FA] dark:bg-[#0E0F1A] text-[#1A2233] dark:text-[#EAEBF5]">
       <div className="bg-[#111A2E] text-[#C4CBDC] p-3 flex flex-col">
-        <div className="flex items-center gap-2 px-2 pb-5 pt-2">
-          <div className="w-[22px] h-[22px] rounded-md bg-gradient-to-br from-[#2F6FED] to-[#7C6AE8]" />
-          <span className="text-white font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            CogniFlow
-          </span>
+        <div className="flex items-center justify-between px-2 pb-5 pt-2">
+          <div className="flex items-center gap-2">
+            <div className="w-[22px] h-[22px] rounded-md bg-gradient-to-br from-[#2F6FED] to-[#7C6AE8]" />
+            <span className="text-white font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              CogniFlow
+            </span>
+          </div>
+          <ThemeToggle />
         </div>
 
         <div className="mb-3 px-1">
@@ -84,29 +89,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {nav.map((n) => {
             const Icon = n.icon;
             return (
-              <Link
-                key={n.href}
-                href={n.href}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium hover:bg-[#1B2740] hover:text-white transition-colors"
-              >
+              <Link key={n.href} href={n.href}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium hover:bg-[#1B2740] hover:text-white transition-colors">
                 <Icon size={15} className="opacity-90" />
                 {n.label}
               </Link>
             );
           })}
         </nav>
+
         <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-[#22304F] px-2.5">
-          <UserButton
-            appearance={{
-              elements: { avatarBox: "w-6 h-6" },
-            }}
-          />
-          <span className="text-[11px] text-[#5B6480]">v0.5 · signed in</span>
+          <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
+          <span className="text-[11px] text-[#5B6480]">v0.6 · signed in</span>
         </div>
       </div>
+
       <div className="overflow-hidden flex flex-col">
         <DbStatusBanner />
-        <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
+        <div className="flex-1 overflow-hidden flex flex-col dark:bg-[#0E0F1A]">{children}</div>
       </div>
     </div>
   );

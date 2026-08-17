@@ -55,3 +55,49 @@ body {
 .animate-count {
   animation: countUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+
+:root,
+.dark {
+  --bg-primary: #0E0F1A;
+  --bg-secondary: #161829;
+  --bg-sidebar: #111A2E;
+  --bg-card: #1B2740;
+  --bg-surface: #F4F6FA;
+  --bg-input: #0E0F1A;
+  --border-primary: #2A2E4A;
+  --border-secondary: #2A3752;
+  --text-primary: #EAEBF5;
+  --text-secondary: #C4CBDC;
+  --text-muted: #8B8FB0;
+  --text-faint: #5B6480;
+  --accent: #8B7FFF;
+  --canvas-dot: #E3E7EF;
+  --node-bg: #1B2740;
+  --node-border: #2A3752;
+}
+
+.light {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8F9FC;
+  --bg-sidebar: #1A2233;
+  --bg-card: #FFFFFF;
+  --bg-surface: #F4F6FA;
+  --bg-input: #FFFFFF;
+  --border-primary: #E3E7EF;
+  --border-secondary: #D0D5E0;
+  --text-primary: #1A2233;
+  --text-secondary: #3A4664;
+  --text-muted: #6B7385;
+  --text-faint: #9AA1B2;
+  --accent: #7C6AE8;
+  --canvas-dot: #D0D5E0;
+  --node-bg: #FFFFFF;
+  --node-border: #E3E7EF;
+}
+
+/* Light mode overrides for designer */
+.light .designer-canvas {
+  background-color: #F8F9FC;
+  background-image: radial-gradient(circle, #D0D5E0 1px, transparent 1px);
+  background-size: 22px 22px;
+}
