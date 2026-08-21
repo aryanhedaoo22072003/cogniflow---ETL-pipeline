@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { clerkAppearance } from "@/lib/clerkAppearance";
+//import { ThemeToggle } from "@/components/ThemeProvider";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -22,7 +23,8 @@ export default async function Home() {
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
         </div>
         <div className="flex items-center gap-3">
-          {userId ? (
+          {/* <ThemeToggle className="border-[#2A2E4A] bg-transparent text-[#8B8FB0] hover:text-white hover:bg-[#161829]" /> */}
+            {userId ? (
             <>
               <Link href="/dashboard" className="bg-[#8B7FFF] text-[#12102A] font-semibold text-sm px-4 py-2 rounded-lg">
                 Open dashboard
