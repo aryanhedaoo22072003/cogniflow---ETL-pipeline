@@ -20,6 +20,7 @@ const PipelineSchema = new Schema(
     headers: { type: [String], default: [] },
     nodes: { type: [NodeSchema], default: [] },
     promotedFrom: { type: String, default: null }, // pipeline id this was promoted from, if any. 
+    fromTemplate: { type: String, default: null },
   },
   { timestamps: true }
 );
