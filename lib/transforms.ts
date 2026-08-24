@@ -9,23 +9,10 @@
 export type Row = Record<string, any>;
 
 export type TransformType =
-  | "source"
-  | "filter"
-  | "rename"
-  | "dedupe"
-  | "nulls"
-  | "expression"
-  | "sequence"
-  | "sorter"
-  | "rank"
-  | "aggregator"
-  | "router"
-  | "union"
-  | "joiner"
-  | "lookup"
-  | "updateStrategy"
-  | "normalizer"
-  | "target";
+  | "source" | "filter" | "rename" | "dedupe" | "nulls" | "expression"
+  | "sequence" | "sorter" | "rank" | "aggregator" | "router" | "union"
+  | "joiner" | "lookup" | "updateStrategy" | "normalizer" | "target"
+  | "scd1" | "scd2" | "scd3";
 
 export interface PipelineNode {
   id: string;
@@ -61,6 +48,9 @@ export const TRANSFORM_LABELS: Record<TransformType, string> = {
   updateStrategy: "Update Strategy",
   normalizer: "Normalizer",
   target: "Target",
+  scd1: "SCD Type 1",
+  scd2: "SCD Type 2",
+  scd3: "SCD Type 3",
 };
 
 /** Safe-ish arithmetic/string expression evaluator for the Expression transform.
@@ -85,11 +75,7 @@ function coerceNumber(v: any): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
-export function applyTransform(
-  rows: Row[],
-  headers: string[],
-  node: PipelineNode
-): StepOutcome {
+export async function applyTransform(rows: Row[], headers: string[], node: PipelineNode): Promise<StepOutcome> {
   const cfg = node.config || {};
 
   switch (node.type) {
@@ -498,6 +484,80 @@ export function applyTransform(
       };
     }
 
+         case "scd1": {
+      const { keyColumn, compareColumns } = cfg;
+      if (!keyColumn || !compareColumns?.length) {
+        return { rows, headers, ok: true, message: "SCD Type 1 — configure key and compare columns" };
+      }
+      // Snapshot rows come from a second Source node output passed via cfg.snapshotRows
+      // If no snapshot provided, treat all rows as INSERT (first load)
+      const snapshot: Row[] = cfg.snapshotRows || [];
+      const { applySCD1 } = await import("@/lib/scd");
+      const out = applySCD1(rows, snapshot, keyColumn, compareColumns);
+      const newHeaders = [...headers];
+      if (!newHeaders.includes("_scd_action")) newHeaders.push("_scd_action");
+      const inserted = out.filter((r) => r._scd_action === "INSERT").length;
+      const updated = out.filter((r) => r._scd_action === "UPDATE").length;
+      const nochange = out.filter((r) => r._scd_action === "NOCHANGE").length;
+      return {
+        rows: out,
+        headers: newHeaders,
+        ok: true,
+        message: `SCD1: ${inserted} INSERT, ${updated} UPDATE, ${nochange} NOCHANGE`,
+      };
+    }
+
+    case "scd2": {
+      const { keyColumn, compareColumns, surrogateColumn } = cfg;
+      if (!keyColumn || !compareColumns?.length) {
+        return { rows, headers, ok: true, message: "SCD Type 2 — configure key and compare columns" };
+      }
+      const snapshot: Row[] = cfg.snapshotRows || [];
+      const surrogate = surrogateColumn || "surrogate_key";
+      const { applySCD2 } = await import("@/lib/scd");
+      const out = applySCD2(rows, snapshot, keyColumn, compareColumns, surrogate);
+      const newHeaders = [...headers];
+      [surrogate, "_scd_start_date", "_scd_end_date", "_scd_is_current", "_scd_action"].forEach((h) => {
+        if (!newHeaders.includes(h)) newHeaders.push(h);
+      });
+      const inserted = out.filter((r) => r._scd_action === "INSERT").length;
+      const updated = out.filter((r) => r._scd_action === "UPDATE").length;
+      const expired = out.filter((r) => r._scd_action === "EXPIRE").length;
+      const nochange = out.filter((r) => r._scd_action === "NOCHANGE").length;
+      return {
+        rows: out,
+        headers: newHeaders,
+        ok: true,
+        message: `SCD2: ${inserted} INSERT, ${updated} new current, ${expired} expired, ${nochange} NOCHANGE`,
+      };
+    }
+
+    case "scd3": {
+      const { keyColumn, compareColumns } = cfg;
+      if (!keyColumn || !compareColumns?.length) {
+        return { rows, headers, ok: true, message: "SCD Type 3 — configure key and compare columns" };
+      }
+      const snapshot: Row[] = cfg.snapshotRows || [];
+      const { applySCD3 } = await import("@/lib/scd");
+      const out = applySCD3(rows, snapshot, keyColumn, compareColumns);
+      const newHeaders = [...headers];
+      compareColumns.forEach((c: string) => {
+        if (!newHeaders.includes(`_prev_${c}`)) newHeaders.push(`_prev_${c}`);
+      });
+      ["_scd_action", "_scd_change_date"].forEach((h) => {
+        if (!newHeaders.includes(h)) newHeaders.push(h);
+      });
+      const inserted = out.filter((r) => r._scd_action === "INSERT").length;
+      const updated = out.filter((r) => r._scd_action === "UPDATE").length;
+      const nochange = out.filter((r) => r._scd_action === "NOCHANGE").length;
+      return {
+        rows: out,
+        headers: newHeaders,
+        ok: true,
+        message: `SCD3: ${inserted} INSERT, ${updated} UPDATE (prev values captured), ${nochange} NOCHANGE`,
+      };
+    }
+    
     case "normalizer": {
       const { pivotColumns, nameColumn, valueColumn, keepColumns } = cfg as {
         pivotColumns: string[];
@@ -554,11 +614,11 @@ export interface RunResult {
   status: "success" | "failed";
 }
 
-export function runPipeline(
+export async function runPipeline(
   initialRows: Row[],
   initialHeaders: string[],
   nodes: PipelineNode[]
-): RunResult {
+): Promise<RunResult> {
   let rows = initialRows;
   let headers = initialHeaders;
   const steps: RunLogStep[] = [];

@@ -22,6 +22,10 @@ const TRANSFORM_GROUPS: { title: string; types: TransformType[] }[] = [
   { title: "Multi-source", types: ["router", "union", "joiner", "lookup", "updateStrategy"] },
   { title: "Restructure", types: ["normalizer"] },
   { title: "Target", types: ["target"] },
+  {
+    title: "SCD",
+    types: ["scd1", "scd2", "scd3"] as TransformType[],
+  },
 ];
 
 function colorFor(type: TransformType) {
@@ -35,8 +39,11 @@ function borderClassFor(type: TransformType) {
   return c === "blue" ? "border-t-blue-500" : c === "green" ? "border-t-emerald-500" : c === "amber" ? "border-t-amber-500" : "border-t-violet-500";
 }
 function dotClassFor(type: TransformType) {
+  
   const c = colorFor(type);
+  
   return c === "blue" ? "bg-blue-500" : c === "green" ? "bg-emerald-500" : c === "amber" ? "bg-amber-500" : "bg-violet-500";
+  
 }
 
 function defaultConfig(type: TransformType, headers: string[]): Record<string, any> {
@@ -79,6 +86,12 @@ function defaultConfig(type: TransformType, headers: string[]): Record<string, a
       return { pivotColumns: [], nameColumn: "field", valueColumn: "value", keepColumns: [] };
     case "target":
       return { mode: "preview", connectionId: "", connectionName: "", table: "", writeMode: "insert" };
+    case "scd1":
+      return { keyColumn: "", compareColumns: [], snapshotNodeId: "", snapshotRows: [], snapshotHeaders: [] };
+    case "scd2":
+      return { keyColumn: "", compareColumns: [], surrogateColumn: "surrogate_key", snapshotNodeId: "", snapshotRows: [], snapshotHeaders: [] };
+    case "scd3":
+      return { keyColumn: "", compareColumns: [], snapshotNodeId: "", snapshotRows: [], snapshotHeaders: [] };
     default:
       return {};
   }
@@ -585,6 +598,7 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
             node={selected}
             headers={headers}
             connections={connections}
+            allNodes={nodes}
             onChange={(patch) => updateNodeConfig(selected.id, patch)}
             onReferenceUpload={(file) => handleReferenceUpload(selected.id, file)}
             onSourceUpload={(file) => handleSourceUpload(selected.id, file)}
@@ -808,6 +822,7 @@ function NodeInspector({
   node,
   headers,
   connections,
+  allNodes,
   onChange,
   onReferenceUpload,
   onSourceUpload,
@@ -818,6 +833,7 @@ function NodeInspector({
   node: PipelineNode;
   headers: string[];
   connections: any[];
+  allNodes: PipelineNode[];
   onChange: (patch: Record<string, any>) => void;
   onReferenceUpload: (file: File) => void;
   onSourceUpload: (file: File) => void;
@@ -1225,6 +1241,189 @@ function NodeInspector({
           {refUploader}
           <Field label="Key column (identifies a record)"><select className={selectCls} value={cfg.key} onChange={(e) => onChange({ key: e.target.value })}>{headers.map((h) => <option key={h}>{h}</option>)}</select></Field>
           <p className="text-[11px] text-[#6B7385] leading-relaxed">Compares each row against the reference snapshot and tags it INSERT / UPDATE / NOCHANGE / DELETE.</p>
+        </>
+      )}
+
+            {/* {(node.type === "scd1" || node.type === "scd2" || node.type === "scd3") && (
+        <>
+          <div className="text-[11px] text-[#6B7385] bg-[#F4F6FA] rounded-lg px-3 py-2 mb-3 leading-relaxed">
+            {node.type === "scd1" && "Type 1 — Overwrite. When a key match is found and tracked columns changed, the row is updated in place. Previous values are lost. Tags: INSERT | UPDATE | NOCHANGE."}
+            {node.type === "scd2" && "Type 2 — Full history. Changed rows spawn a new current row + an expired old row with start/end dates. Tags: INSERT | UPDATE | EXPIRE | NOCHANGE."}
+            {node.type === "scd3" && "Type 3 — Previous value columns. Adds _prev_<column> for each tracked column so you can see what changed. One level of history only. Tags: INSERT | UPDATE | NOCHANGE."}
+          </div>
+
+          <Field label="Business key column">
+            <select className={selectCls} value={cfg.keyColumn || ""} onChange={(e) => onChange({ keyColumn: e.target.value })}>
+              <option value="">Select key column…</option>
+              {headers.map((h) => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </Field>
+
+          {node.type === "scd2" && (
+            <Field label="Surrogate key column name">
+              <input className={selectCls} value={cfg.surrogateColumn || "surrogate_key"} onChange={(e) => onChange({ surrogateColumn: e.target.value })} placeholder="surrogate_key" />
+            </Field>
+          )}
+
+          <Field label="Tracked columns (compare for changes)">
+            <div className="space-y-1.5">
+              {headers.filter((h) => h !== cfg.keyColumn).map((h) => {
+                const checked = (cfg.compareColumns || []).includes(h);
+                return (
+                  <label key={h} className="flex items-center gap-2 text-[12px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const current: string[] = cfg.compareColumns || [];
+                        onChange({ compareColumns: checked ? current.filter((c: string) => c !== h) : [...current, h] });
+                      }}
+                    />
+                    <span className="font-mono">{h}</span>
+                  </label>
+                );
+              })}
+              {headers.length === 0 && <p className="text-[11px] text-[#9AA1B2]">Attach a Source first to see columns.</p>}
+            </div>
+          </Field>
+
+          <Field label="Snapshot / reference data">
+            <label className="block border border-dashed border-[#E3E7EF] rounded px-2 py-3 text-[11px] text-center cursor-pointer hover:border-[#2F6FED]">
+              {cfg.referenceHeaders?.length
+                ? `✓ ${cfg.referenceRows?.length || 0} snapshot rows loaded`
+                : "Upload snapshot CSV (previous state)"}
+              <input type="file" accept=".csv" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                import("papaparse").then(({ default: Papa }) => {
+                  Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (result) => {
+                      onChange({
+                        referenceRows: result.data,
+                        referenceHeaders: result.meta.fields || [],
+                      });
+                    },
+                  });
+                });
+              }} />
+            </label>
+            {cfg.referenceHeaders?.length > 0 && (
+              <p className="text-[11px] text-[#9AA1B2] mt-1">
+                Columns: {cfg.referenceHeaders.slice(0, 5).join(", ")}{cfg.referenceHeaders.length > 5 ? ` +${cfg.referenceHeaders.length - 5} more` : ""}
+              </p>
+            )}
+          </Field>
+
+          <div className="mt-3 pt-3 border-t border-[#E3E7EF] text-[11px] text-[#9AA1B2] leading-relaxed">
+            <strong className="text-[#6B7385]">Output columns added:</strong>
+            {node.type === "scd1" && " _scd_action"}
+            {node.type === "scd2" && " surrogate_key, _scd_start_date, _scd_end_date, _scd_is_current, _scd_action"}
+            {node.type === "scd3" && ` _prev_<column> for each tracked column, _scd_action, _scd_change_date`}
+          </div>
+        </>
+      )} */}
+            {(node.type === "scd1" || node.type === "scd2" || node.type === "scd3") && (
+        <>
+          <div className="text-[11px] text-[#6B7385] bg-[#F4F6FA] rounded-lg px-3 py-2 mb-3 leading-relaxed">
+            {node.type === "scd1" && "Type 1 — Overwrite. Changed columns are updated in place. Previous values are lost. Adds: _scd_action"}
+            {node.type === "scd2" && "Type 2 — Full history. Changed rows spawn a new current row + an expired old row with dates. Adds: surrogate_key, _scd_start_date, _scd_end_date, _scd_is_current, _scd_action"}
+            {node.type === "scd3" && "Type 3 — Previous value columns. Adds _prev_<column> for each tracked column. One level of history. Adds: _prev_*, _scd_action, _scd_change_date"}
+          </div>
+
+          {/* Snapshot source — picks from any existing Source node in the pipeline */}
+          <Field label="Snapshot source (previous state)">
+            <select
+              className={selectCls}
+              value={cfg.snapshotNodeId || ""}
+              onChange={(e) => {
+                const selectedNode = nodes.find((n) => n.id === e.target.value);
+                onChange({
+                  snapshotNodeId: e.target.value,
+                  snapshotRows: selectedNode?.config?.rows || [],
+                  snapshotHeaders: selectedNode?.config?.headers || [],
+                });
+              }}
+            >
+              <option value="">Select a Source node as snapshot…</option>
+              {allNodes
+                .filter((n) => n.type === "source" && n.id !== node.id && (n.config?.rows?.length || n.config?.connectionId))
+                .map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.config?.fileName || n.config?.connectionName || n.id} ({(n.config?.rows?.length || 0)} rows)
+                  </option>
+                ))}
+            </select>
+            <p className="text-[11px] text-[#9AA1B2] mt-1">
+              Add a second Source node with the previous snapshot data, then select it here.
+              Works with any table — CSV, Postgres, MySQL, Sheets.
+            </p>
+          </Field>
+
+          {cfg.snapshotRows?.length > 0 && (
+            <div className="text-[11px] text-emerald-600 bg-emerald-50 rounded px-2.5 py-1.5 mb-2">
+              ✓ {cfg.snapshotRows.length} snapshot rows loaded from selected source
+            </div>
+          )}
+
+          <Field label="Business key column">
+            <select className={selectCls} value={cfg.keyColumn || ""} onChange={(e) => onChange({ keyColumn: e.target.value })}>
+              <option value="">Select key column…</option>
+              {headers.map((h) => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </Field>
+
+          {node.type === "scd2" && (
+            <Field label="Surrogate key column name">
+              <input
+                className={selectCls}
+                value={cfg.surrogateColumn || "surrogate_key"}
+                onChange={(e) => onChange({ surrogateColumn: e.target.value })}
+                placeholder="surrogate_key"
+              />
+            </Field>
+          )}
+
+          <Field label="Tracked columns (compare for changes)">
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {headers.filter((h) => h !== cfg.keyColumn).map((h) => {
+                const checked = (cfg.compareColumns || []).includes(h);
+                return (
+                  <label key={h} className="flex items-center gap-2 text-[12px] cursor-pointer hover:text-[#1A2233]">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const current: string[] = cfg.compareColumns || [];
+                        onChange({
+                          compareColumns: checked
+                            ? current.filter((c: string) => c !== h)
+                            : [...current, h],
+                        });
+                      }}
+                    />
+                    <span className="font-mono">{h}</span>
+                  </label>
+                );
+              })}
+              {headers.length === 0 && (
+                <p className="text-[11px] text-[#9AA1B2]">Attach a Source node first to see available columns.</p>
+              )}
+            </div>
+            {(cfg.compareColumns || []).length > 0 && (
+              <p className="text-[11px] text-[#9AA1B2] mt-1">
+                Tracking: {(cfg.compareColumns as string[]).join(", ")}
+              </p>
+            )}
+          </Field>
+
+          <div className="mt-2 pt-2.5 border-t border-[#E3E7EF] text-[11px] text-[#9AA1B2] leading-relaxed">
+            <strong className="text-[#6B7385]">How to use:</strong> Add two Source nodes —
+            one for current data, one for the snapshot. Wire both into this node by selecting
+            the snapshot above. The current data flows through automatically.
+            {node.type === "scd2" && " Filter to _scd_action ≠ NOCHANGE downstream to see only changed rows."}
+          </div>
         </>
       )}
 
