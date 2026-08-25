@@ -627,7 +627,7 @@ export async function runPipeline(
   for (const node of nodes) {
     const rowsInCount = rows.length;
     try {
-      const outcome = applyTransform(rows, headers, node);
+      const outcome = await applyTransform(rows, headers, node);
       rows = outcome.rows;
       headers = outcome.headers;
       steps.push({

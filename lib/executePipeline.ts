@@ -153,7 +153,13 @@ export async function executeAndLogPipeline(pipelineId: string, ownerId: string,
   );
 
   const start = Date.now();
-  const result = runPipeline([], [], nodes);
+
+  // Extract initial rows and headers from the first Source node
+  const sourceNode = nodes.find((n) => n.type === "source");
+  const initialRows = sourceNode?.config?.rows || [];
+  const initialHeaders = sourceNode?.config?.headers || Object.keys(initialRows[0] || {});
+
+  const result = await runPipeline(initialRows, initialHeaders, nodes);
 
   // If there's a Target node configured to write to a real connection, do that now.
   const targetNode = nodes.find((n) => n.type === "target" && n.config?.connectionId);

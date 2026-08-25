@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     ApiKey.findByIdAndUpdate(apiKey._id, { lastUsedAt: new Date() }).catch(() => {});
 
-    const result = await executeAndLogPipeline(id, apiKey.ownerId, "(API trigger)");
+       const result = await executeAndLogPipeline(id, apiKey.ownerId, "(API trigger)");
 
     return NextResponse.json({
       status: result.status,

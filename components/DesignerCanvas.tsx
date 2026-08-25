@@ -1338,7 +1338,7 @@ function NodeInspector({
               className={selectCls}
               value={cfg.snapshotNodeId || ""}
               onChange={(e) => {
-                const selectedNode = nodes.find((n) => n.id === e.target.value);
+                const selectedNode = allNodes.find((n) => n.id === e.target.value);
                 onChange({
                   snapshotNodeId: e.target.value,
                   snapshotRows: selectedNode?.config?.rows || [],
