@@ -152,14 +152,25 @@ export async function executeAndLogPipeline(pipelineId: string, ownerId: string,
     })
   );
 
-  const start = Date.now();
+  // const start = Date.now();
 
-  // Extract initial rows and headers from the first Source node
-  const sourceNode = nodes.find((n) => n.type === "source");
+  // // Extract initial rows and headers from the first Source node
+  // const sourceNode = nodes.find((n) => n.type === "source");
+  // const initialRows = sourceNode?.config?.rows || [];
+  // const initialHeaders = sourceNode?.config?.headers || Object.keys(initialRows[0] || {});
+
+  // const result = await runPipeline(initialRows, initialHeaders, nodes);
+
+    // Sort nodes by execution order using edges
+  const { topoSort, autoWire } = await import("@/lib/graphUtils");
+  const pipelineEdges = pipeline.edges?.length ? pipeline.edges : autoWire(nodes);
+  const orderedNodes = topoSort(nodes, pipelineEdges);
+
+  const start = Date.now();
+  const sourceNode = orderedNodes.find((n: PipelineNode) => n.type === "source");
   const initialRows = sourceNode?.config?.rows || [];
   const initialHeaders = sourceNode?.config?.headers || Object.keys(initialRows[0] || {});
-
-  const result = await runPipeline(initialRows, initialHeaders, nodes);
+  const result = await runPipeline(initialRows, initialHeaders, orderedNodes);
 
   // If there's a Target node configured to write to a real connection, do that now.
   const targetNode = nodes.find((n) => n.type === "target" && n.config?.connectionId);

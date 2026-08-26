@@ -5,14 +5,18 @@ import { useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { useRouter } from "next/navigation";
 import { Undo2, Redo2 } from "lucide-react";
-import type { PipelineNode, TransformType, RunLogStep } from "@/lib/transforms";
-import { TRANSFORM_LABELS } from "@/lib/transforms";
+import type { PipelineNode, RunLogStep } from "@/lib/transforms";
+
 import DataProfileModal from "@/components/DataProfileModal";
 import AiSuggestModal from "@/components/AiSuggestModal";
 import AiGeneratePipelineModal from "@/components/AiGeneratePipelineModal";
 import CopilotChat, { CopilotOperation } from "@/components/CopilotChat";
+import { TRANSFORM_LABELS, TransformType } from "@/lib/transforms";
+import { Edge, autoWire } from "@/lib/graphUtils";
 
 type Row = Record<string, any>;
+
+
 
 const TRANSFORM_GROUPS: { title: string; types: TransformType[] }[] = [
   { title: "Source", types: ["source"] },
@@ -109,12 +113,25 @@ export default function DesignerCanvas({
   const [environment, setEnvironment] = useState(initialPipeline?.environment || "DEV");
   const [headers, setHeaders] = useState<string[]>(initialPipeline?.headers || []);
   const [nodes, setNodes] = useState<PipelineNode[]>(initialPipeline?.nodes || []);
+  const [edges, setEdges] = useState<Edge[]>(
+    initialPipeline?.edges?.length
+      ? initialPipeline.edges
+      : autoWire(initialPipeline?.nodes || [])
+  );
   const [history, setHistory] = useState<PipelineNode[][]>([]);
   const [redoStack, setRedoStack] = useState<PipelineNode[][]>([]);
   const [promotedFrom] = useState<string | null>(initialPipeline?.promotedFrom || null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [log, setLog] = useState<RunLogStep[]>([]);
   const [running, setRunning] = useState(false);
+    const [draggingWire, setDraggingWire] = useState<{
+    fromNodeId: string;
+    fromX: number;
+    fromY: number;
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [hoveredPort, setHoveredPort] = useState<{ nodeId: string; side: "in" | "out" } | null>(null);
   const [preview, setPreview] = useState<{ rows: Row[]; headers: string[] } | null>(null);
   const [savedId, setSavedId] = useState<string | null>(pipelineId !== "new" ? pipelineId : null);
   const [toastMsg, setToastMsg] = useState("");
@@ -128,6 +145,7 @@ export default function DesignerCanvas({
   const counter = useRef(0);
   const dragState = useRef<{ id: string; startX: number; startY: number; ox: number; oy: number } | null>(null);
 
+  
   useEffect(() => {
     fetch("/api/connections")
       .then((r) => r.json())
@@ -369,7 +387,7 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
   }
 
   async function savePipeline() {
-    const payload = { name, environment, headers, nodes };
+    const payload = { name, environment, headers, nodes,edges };
     if (savedId) {
       const res = await fetch(`/api/pipelines/${savedId}`, {
         method: "PUT",
@@ -538,13 +556,68 @@ function onNodeMouseDown(e: React.MouseEvent, node: PipelineNode) {
       {/* CANVAS */}
       <div className="relative overflow-auto" style={{ backgroundImage: "radial-gradient(circle, #E3E7EF 1px, transparent 1px)", backgroundSize: "22px 22px" }}>
         <div className="relative" style={{ width: 1400, height: 1000 }}>
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* <svg className="absolute inset-0 w-full h-full pointer-events-none">
             {nodes.slice(0, -1).map((a, i) => {
               const b = nodes[i + 1];
               const x1 = a.x + 190, y1 = a.y + 35, x2 = b.x, y2 = b.y + 35, mid = (x1 + x2) / 2;
               return <path key={a.id} d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`} stroke="#2F6FED55" strokeWidth={2} fill="none" />;
             })}
-          </svg>
+          </svg> */}
+                {/* SVG layer — wires + dragging wire */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ zIndex: 1 }}
+      >
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2F6FED" opacity="0.7" />
+          </marker>
+        </defs>
+
+        {/* Existing edges */}
+        {edges.map((edge) => {
+          const fromNode = nodes.find((n) => n.id === edge.from);
+          const toNode = nodes.find((n) => n.id === edge.to);
+          if (!fromNode || !toNode) return null;
+          const x1 = fromNode.x + 210;
+          const y1 = fromNode.y + 36;
+          const x2 = toNode.x;
+          const y2 = toNode.y + 36;
+          const mx = (x1 + x2) / 2;
+          return (
+            <g key={edge.id} className="pointer-events-auto">
+              <path
+                d={`M ${x1} ${y1} C ${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={12}
+                className="cursor-pointer"
+                onClick={() => setEdges((prev) => prev.filter((e) => e.id !== edge.id))}
+              />
+              <path
+                d={`M ${x1} ${y1} C ${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`}
+                fill="none"
+                stroke="#2F6FED"
+                strokeWidth={1.5}
+                opacity={0.6}
+                markerEnd="url(#arrowhead)"
+              />
+            </g>
+          );
+        })}
+
+        {/* Wire being dragged */}
+        {draggingWire && (
+          <path
+            d={`M ${draggingWire.fromX} ${draggingWire.fromY} C ${(draggingWire.fromX + draggingWire.mouseX) / 2} ${draggingWire.fromY} ${(draggingWire.fromX + draggingWire.mouseX) / 2} ${draggingWire.mouseY} ${draggingWire.mouseX} ${draggingWire.mouseY}`}
+            fill="none"
+            stroke="#2F6FED"
+            strokeWidth={1.5}
+            strokeDasharray="6 3"
+            opacity={0.8}
+          />
+        )}
+      </svg>
 
           {nodes.length === 0 && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-[#6B7385] w-80">

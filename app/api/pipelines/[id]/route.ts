@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json();
     const pipeline = await Pipeline.findByIdAndUpdate(
       id,
-      { name: body.name, environment: body.environment, headers: body.headers, nodes: body.nodes },
+      { name: body.name, environment: body.environment, headers: body.headers, nodes: body.nodes, edges: body.edges || [] },
       { new: true }
     );
     return NextResponse.json({ pipeline });

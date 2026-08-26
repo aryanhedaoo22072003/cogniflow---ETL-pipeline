@@ -19,6 +19,7 @@ const PipelineSchema = new Schema(
     environment: { type: String, enum: ["DEV", "SIT", "PROD"], default: "DEV" },
     headers: { type: [String], default: [] },
     nodes: { type: [NodeSchema], default: [] },
+    edges: { type: Array, default: [] },
     promotedFrom: { type: String, default: null }, // pipeline id this was promoted from, if any. 
     fromTemplate: { type: String, default: null },
   },
