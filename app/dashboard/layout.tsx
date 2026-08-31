@@ -102,7 +102,7 @@
 
 //       <div className="overflow-hidden flex flex-col">
 //         <DbStatusBanner />
-//         <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
+//         <div className="flex-1 overflow-y-auto flex flex-col">{children}</div>
 //       </div>
 //     </div>
 //   );
@@ -210,10 +210,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </div>
 
-      <div className="overflow-hidden flex flex-col">
-        <DbStatusBanner />
-        <div className="flex-1 overflow-hidden flex flex-col">{children}</div>
-      </div>
+     <div className="overflow-y-auto flex flex-col">
+  <DbStatusBanner />
+  <div className="flex-1 overflow-y-auto flex flex-col">{children}</div>
+</div>
     </div>
   );
 }
