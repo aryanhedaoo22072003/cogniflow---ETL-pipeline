@@ -68,15 +68,52 @@ export default function SchedulesPage() {
     setSchedules(prev => prev.filter(s => s._id !== id));
   }
 
-  async function runNow(scheduleId: string, pid?: string, tid?: string) {
-    setRunningId(scheduleId);
-    try {
-      if (pid) await fetch(`/api/pipelines/${pid}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      else if (tid) await fetch(`/api/taskflows/${tid}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-    } catch {}
-    setRunningId(null);
-    load();
-  }
+  // async function runNow(scheduleId: string, pid?: string, tid?: string) {
+  //   setRunningId(scheduleId);
+  //   try {
+  //     if (pid) await fetch(`/api/pipelines/${pid}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  //     else if (tid) await fetch(`/api/taskflows/${tid}/run`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  //   } catch {}
+  //   setRunningId(null);
+  //   load();
+  // }
+
+//   async function runNow(scheduleId: string, pid?: string, tid?: string) {
+//   setRunningId(scheduleId);
+//   try {
+//     // Use the full schedule runner so email alerts fire
+//     await fetch("/api/schedules/run", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Authorization": "Bearer cogniflow-secret-2026",
+//       },
+//     });
+//   } catch {}
+//   setRunningId(null);
+//   load();
+// }
+
+async function runNow(scheduleId: string, pid?: string, tid?: string) {
+  setRunningId(scheduleId);
+  try {
+    if (pid) {
+      await fetch(`/api/pipelines/${pid}/run?sendEmail=true`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+    } else if (tid) {
+      await fetch(`/api/taskflows/${tid}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+    }
+  } catch {}
+  setRunningId(null);
+  load();
+}
 
   const getName = (s: any) => {
     if (s.taskflowId) return taskflows.find(t => t._id === s.taskflowId)?.name || s.taskflowId;

@@ -77,7 +77,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   try {
     const ownerId = await requireOwnerId();
     await connectDB();
-    const result = await executeAndLogPipeline(id, ownerId);
+    // const sendEmail = new URL(_req.url).searchParams.get("sendEmail") === "true";
+    const sendEmail = new URL(_req.url).searchParams.get("sendEmail") === "true";
+    const result = await executeAndLogPipeline(id, ownerId, undefined, sendEmail);
     return NextResponse.json(result);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     if (env) query.environment = env;
     // const pipelines = await Pipeline.find(query).sort({ updatedAt: -1 }).lean();
     const pipelines = await Pipeline.find(query)
-  .select("-nodes.config.rows -nodes.config.sampleRows -nodes.config.referenceRows")
+  .select("-nodes.config.rows -nodes.config.sampleRows -nodes.config.referenceRows -nodes.config.referenceRows -edges")
   .sort({ updatedAt: -1 })
   .lean();
     return NextResponse.json({ pipelines });
