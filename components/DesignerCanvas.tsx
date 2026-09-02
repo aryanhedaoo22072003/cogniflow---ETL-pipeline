@@ -3199,7 +3199,8 @@ import AiGeneratePipelineModal from "@/components/AiGeneratePipelineModal";
 import CopilotChat, { CopilotOperation } from "@/components/CopilotChat";
 import { TRANSFORM_LABELS, TransformType } from "@/lib/transforms";
 import { Edge, autoWire } from "@/lib/graphUtils";
-
+import VersionHistoryPanel from "@/components/VersionHistoryPanel";
+import { History } from "lucide-react";
 type Row = Record<string, any>;
 
 const TRANSFORM_GROUPS: { title: string; types: TransformType[] }[] = [
@@ -3285,6 +3286,7 @@ export default function DesignerCanvas({ pipelineId, initialPipeline }: { pipeli
   const [aiSuggestNodeId, setAiSuggestNodeId] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showCopilot, setShowCopilot] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const counter = useRef(0);
   const dragState = useRef<{ id: string; ox: number; oy: number; startX: number; startY: number } | null>(null);
 
@@ -3569,6 +3571,10 @@ export default function DesignerCanvas({ pipelineId, initialPipeline }: { pipeli
             {promoting ? "Promoting…" : `→ ${NEXT_ENV[environment]}`}
           </button>
         )}
+          <button onClick={() => setShowHistory(v => !v)}
+          className={`text-xs font-semibold border rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-colors ${showHistory ? "border-[#7C6AE8] bg-[#7C6AE8] text-white" : "border-[#7C6AE8] text-[#7C6AE8] hover:bg-[#7C6AE810]"}`}>
+          <History size={12} /> History
+        </button>
         <button onClick={savePipeline} disabled={saving} className="text-xs font-semibold border border-[#E3E7EF] bg-white rounded-lg px-3 py-1.5 hover:border-[#2F6FED] flex items-center gap-1.5 disabled:opacity-50">
           <Save size={12} /> {saving ? "Saving…" : "Save"}
         </button>
@@ -3951,8 +3957,28 @@ export default function DesignerCanvas({ pipelineId, initialPipeline }: { pipeli
         const dataRows = srcNode ? (isSample ? srcNode.config.sampleRows || [] : srcNode.config.rows || []) : [];
         return <AiGeneratePipelineModal rows={dataRows} headers={headers} hasExistingSteps={nodes.some(n => n.type !== "source")} onApply={applyGeneratedPipeline} onClose={() => setShowGenerateModal(false)} />;
       })()}
-
+{/* 
       {showCopilot && <CopilotChat nodes={nodes} headers={headers} onApplyOperations={applyCopilotOperations} onClose={() => setShowCopilot(false)} />}
+    </div>
+  );
+} */}
+      {showCopilot && <CopilotChat nodes={nodes} headers={headers} onApplyOperations={applyCopilotOperations} onClose={() => setShowCopilot(false)} />}
+
+      {showHistory && savedId && (
+        <VersionHistoryPanel
+          pipelineId={savedId}
+          currentNodes={nodes}
+          onRestore={(restoredNodes, restoredEdges, restoredHeaders) => {
+            pushHistory(nodes);
+            setNodes(restoredNodes);
+            setEdges(restoredEdges);
+            setHeaders(restoredHeaders);
+            setShowHistory(false);
+            toast("Pipeline restored to selected version");
+          }}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div>
   );
 }
