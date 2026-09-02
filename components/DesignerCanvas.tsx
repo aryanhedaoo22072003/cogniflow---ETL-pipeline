@@ -3187,6 +3187,7 @@
 /*------DesignerCanvas — full rewrite with manual wiring, port dots, improved UI */
 "use client";
 
+import ColumnMapper from "@/components/ColumnMapper";
 import { useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { useRouter } from "next/navigation";
@@ -4351,6 +4352,14 @@ function NodeInspector({ node, headers, connections, allNodes, onChange, onRefer
                   <option value="truncate_insert">Truncate then insert</option>
                 </select>
               </Field>
+
+              {/* COLUMN MAPPER */}
+              <ColumnMapper
+                sourceHeaders={headers}
+                targetHeaders={headers}
+                mappings={cfg.columnMappings || []}
+                onChange={mappings => onChange({ columnMappings: mappings })}
+              />
             </>
           ) : (
             <p className="text-[11px] text-[#9AA1B2] leading-relaxed">Run the pipeline to preview output and download as CSV or JSON. No database writes in this mode.</p>
