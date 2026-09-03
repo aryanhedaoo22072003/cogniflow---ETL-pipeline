@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/pipelines/(.*)/trigger",
   "/api/schedules/run",
   "/api/alerts/test-email",
+  "/share/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

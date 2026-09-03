@@ -20,6 +20,8 @@ const PipelineSchema = new Schema(
     headers: { type: [String], default: [] },
     nodes: { type: [NodeSchema], default: [] },
     edges: { type: Array, default: [] },
+    shareToken: { type: String, default: null },
+    shareEnabled: { type: Boolean, default: false },
     promotedFrom: { type: String, default: null }, // pipeline id this was promoted from, if any. 
     fromTemplate: { type: String, default: null },
   },
