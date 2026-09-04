@@ -35,14 +35,19 @@ Return only valid JSON array, no markdown, no explanation.`;
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_tokens: 1500,
+      max_tokens: 2048,
     });
-
     const text = completion.choices[0]?.message?.content || "[]";
-    const clean = text.replace(/```json|```/g, "").trim();
+    // Extract JSON array from response robustly
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return NextResponse.json({ steps: [] });
+    let clean = match[0];
+    // Truncate to last complete object if unterminated
+    const lastBrace = clean.lastIndexOf("}");
+    if (lastBrace !== -1) clean = clean.slice(0, lastBrace + 1) + "]";
     const steps = JSON.parse(clean);
     return NextResponse.json({ steps: Array.isArray(steps) ? steps : [] });
   } catch (err: any) {

@@ -21,9 +21,10 @@ function NodeTypeColor(type: string) {
   return "bg-violet-50 border-violet-200 text-violet-700";
 }
 
-export default async function SharePage({ params }: { params: { token: string } }) {
+export default async function SharePage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
   await connectDB();
-  const pipeline = await Pipeline.findOne({ shareToken: params.token, shareEnabled: true })
+  const pipeline = await Pipeline.findOne({ shareToken: token, shareEnabled: true })
     .select("-nodes.config.rows -nodes.config.sampleRows -nodes.config.referenceRows")
     .lean<any>();
 

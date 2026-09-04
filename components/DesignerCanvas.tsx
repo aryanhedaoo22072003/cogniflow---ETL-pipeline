@@ -802,24 +802,19 @@ const [showAiCleaning, setShowAiCleaning] = useState(false);
           onComplete={(rows, hdrs, steps) => {
             setPreview({ rows, headers: hdrs });
             setLog(steps);
-            setShowRunProgress(false);
             toast("✓ Pipeline completed");
+            // Don't auto-close — let user click Close or View output
           }}
         />
       )}
-
-      {showAiCleaning && (() => {
-        const src = nodes.find(n => n.type === "source");
-        const dataRows = src?.config?.rows || src?.config?.sampleRows || [];
-        return (
-          <AiCleaningModal
-            rows={dataRows}
-            headers={headers}
-            onApply={addSuggestedNodes}
-            onClose={() => setShowAiCleaning(false)}
-          />
-        );
-      })()}
+      {showAiCleaning && (
+        <AiCleaningModal
+          rows={(() => { const src = nodes.find(n => n.type === "source"); return src?.config?.rows || src?.config?.sampleRows || []; })()}
+          headers={headers}
+          onApply={addSuggestedNodes}
+          onClose={() => setShowAiCleaning(false)}
+        />
+      )}
 
       {showHistory && savedId && (
         <VersionHistoryPanel

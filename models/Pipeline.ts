@@ -11,7 +11,6 @@ const NodeSchema = new Schema(
   },
   { _id: false }
 );
-
 const PipelineSchema = new Schema(
   {
     name: { type: String, required: true },
@@ -25,7 +24,6 @@ const PipelineSchema = new Schema(
     promotedFrom: { type: String, default: null }, // pipeline id this was promoted from, if any. 
     fromTemplate: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
-
 export default models.Pipeline || model("Pipeline", PipelineSchema);
