@@ -23,3 +23,25 @@
 .animate-fade-up {
   animation: fade-up 0.5s ease forwards;
 }
+
+
+
+/* Force dark theme on Clerk org switcher popup */
+.cl-organizationSwitcherPopoverCard,
+.cl-organizationSwitcherPopoverMain,
+.cl-userPreview,
+.cl-organizationPreview {
+  background-color: #161829 !important;
+  color: #ffffff !important;
+}
+
+.cl-organizationSwitcherPopoverActionButton,
+.cl-organizationListPreviewButton,
+.cl-organizationListCreateOrganizationActionButton {
+  color: #ffffff !important;
+}
+
+.cl-organizationSwitcherPopoverActionButton:hover,
+.cl-organizationListPreviewButton:hover {
+  background-color: #1F2740 !important;
+}
