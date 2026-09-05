@@ -113,6 +113,7 @@ import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { Home, Workflow, Activity, Plug, ListTree, Clock3, BellRing, LayoutTemplate, KeyRound } from "lucide-react";
 import DbStatusBanner from "@/components/DbStatusBanner";
+import NotificationCentre from "@/components/NotificationCentre";
 
 const nav = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -203,10 +204,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-
         <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-[#22304F] px-2.5">
           <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
           <span className="text-[11px] text-[#5B6480]">v0.6 · signed in</span>
+          <div className="ml-auto">
+            <NotificationCentre />
+          </div>
         </div>
       </div>
 
