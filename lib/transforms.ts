@@ -257,12 +257,14 @@ export async function applyTransform(rows: Row[], headers: string[], node: Pipel
         }
 
         // Step 2: compute output ports (can use variables and macros)
+        let expressionError: string | null = null;
         for (const col of outputPorts) {
           if (!col.name || !col.expr) continue;
           try {
             const fn = new Function(...Object.keys(varScope), `return (${col.expr})`);
             result[col.name] = fn(...Object.values(varScope));
-          } catch {
+          } catch (e: any) {
+            expressionError = `Column "${col.name}": ${e.message}`;
             result[col.name] = null;
           }
         }
@@ -293,6 +295,14 @@ export async function applyTransform(rows: Row[], headers: string[], node: Pipel
         .map((c) => c.name)
         .join(", ");
 
+      if (expressionError) {
+        return {
+          rows,
+          headers,
+          ok: false,
+          message: `Expression error — ${expressionError}`,
+        };
+      }
       return {
         rows: out,
         headers: currentHeaders,
