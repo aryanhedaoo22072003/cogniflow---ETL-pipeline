@@ -45,3 +45,33 @@
 .cl-organizationListPreviewButton:hover {
   background-color: #1F2740 !important;
 }
+
+/*adddinh 10-09-2026
+
+/* Force Clerk Auth Components to high-contrast dark theme */
+.cl-card,
+.cl-rootBox {
+  color: #ffffff !important;
+}
+
+.cl-headerTitle,
+.cl-socialButtonsBlockButtonText,
+.cl-formFieldLabel,
+.cl-footerActionText,
+.cl-dividerText {
+  color: #ffffff !important;
+}
+
+.cl-headerSubtitle,
+.cl-socialButtonsBlockButtonArrow {
+  color: #9ca3af !important;
+}
+
+.cl-socialButtonsBlockButton {
+  background-color: #1c1f37 !important;
+  border-color: #2a2e4a !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background-color: #252a4a !important;
+}
