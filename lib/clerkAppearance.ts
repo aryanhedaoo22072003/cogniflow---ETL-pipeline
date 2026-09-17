@@ -50,12 +50,43 @@
 //   },
 // };
 // 
+////////////////////////////////////////////////
+// import { dark } from "@clerk/themes";
+// import type { Appearance } from "@clerk/types";
+
+// export const clerkAppearancePage: Appearance = {
+//   baseTheme: dark,
+//   variables: {
+//     colorPrimary: "#8B7FFF",
+//     colorBackground: "#131525",
+//     colorInputBackground: "#1C1F37",
+//     colorInputText: "#FFFFFF",
+//     colorText: "#FFFFFF",
+//     colorTextSecondary: "#9CA3AF",
+//   },
+//   elements: {
+//     card: "bg-[#131525] border border-[#2A2E4A] shadow-2xl",
+//     headerTitle: "!text-white !font-bold text-xl",
+//     headerSubtitle: "!text-gray-300 text-sm",
+//     socialButtonsBlockButton: "!bg-[#1C1F37] !border-[#2A2E4A] !text-white hover:!bg-[#252A4A]",
+//     socialButtonsBlockButtonText: "!text-white !font-medium",
+//     socialButtonsBlockButtonArrow: "!text-white",
+//     dividerLine: "!bg-[#2A2E4A]",
+//     dividerText: "!text-gray-400",
+//     formFieldLabel: "!text-gray-200 !font-semibold text-xs",
+//     formFieldInput: "!bg-[#1C1F37] !border-[#2A2E4A] !text-white placeholder:!text-gray-500",
+//     footerActionLink: "!text-[#8B7FFF] hover:!text-[#A198FF]",
+//     footerActionText: "!text-gray-400",
+//     formButtonPrimary: "!bg-[#8B7FFF] !text-[#12102A] hover:!opacity-90",
+//   },
+// };
+
 
 import { dark } from "@clerk/themes";
-import type { Appearance } from "@clerk/types";
 
-export const clerkAppearancePage: Appearance = {
+export const clerkAppearancePage = {
   baseTheme: dark,
+
   variables: {
     colorPrimary: "#8B7FFF",
     colorBackground: "#131525",
@@ -64,19 +95,40 @@ export const clerkAppearancePage: Appearance = {
     colorText: "#FFFFFF",
     colorTextSecondary: "#9CA3AF",
   },
+
   elements: {
     card: "bg-[#131525] border border-[#2A2E4A] shadow-2xl",
     headerTitle: "!text-white !font-bold text-xl",
     headerSubtitle: "!text-gray-300 text-sm",
-    socialButtonsBlockButton: "!bg-[#1C1F37] !border-[#2A2E4A] !text-white hover:!bg-[#252A4A]",
-    socialButtonsBlockButtonText: "!text-white !font-medium",
-    socialButtonsBlockButtonArrow: "!text-white",
-    dividerLine: "!bg-[#2A2E4A]",
-    dividerText: "!text-gray-400",
-    formFieldLabel: "!text-gray-200 !font-semibold text-xs",
-    formFieldInput: "!bg-[#1C1F37] !border-[#2A2E4A] !text-white placeholder:!text-gray-500",
-    footerActionLink: "!text-[#8B7FFF] hover:!text-[#A198FF]",
-    footerActionText: "!text-gray-400",
-    formButtonPrimary: "!bg-[#8B7FFF] !text-[#12102A] hover:!opacity-90",
+
+    socialButtonsBlockButton:
+      "!bg-[#1C1F37] !border-[#2A2E4A] !text-white hover:!bg-[#252A4A]",
+
+    socialButtonsBlockButtonText:
+      "!text-white !font-medium",
+
+    socialButtonsBlockButtonArrow:
+      "!text-white",
+
+    dividerLine:
+      "!bg-[#2A2E4A]",
+
+    dividerText:
+      "!text-gray-400",
+
+    formFieldLabel:
+      "!text-gray-200 !font-semibold text-xs",
+
+    formFieldInput:
+      "!bg-[#1C1F37] !border-[#2A2E4A] !text-white placeholder:!text-gray-500",
+
+    footerActionLink:
+      "!text-[#8B7FFF] hover:!text-[#A198FF]",
+
+    footerActionText:
+      "!text-gray-400",
+
+    formButtonPrimary:
+      "!bg-[#8B7FFF] !text-[#12102A] hover:!opacity-90",
   },
 };
