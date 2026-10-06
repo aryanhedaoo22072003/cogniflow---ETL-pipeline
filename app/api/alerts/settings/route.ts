@@ -10,7 +10,7 @@ export async function GET() {
     const settings = await AlertSettings.findOne({ ownerId }).lean();
     return NextResponse.json({ settings: settings || { slackWebhookUrl: "", enabled: false } });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -26,6 +26,6 @@ export async function PUT(req: NextRequest) {
     );
     return NextResponse.json({ settings });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

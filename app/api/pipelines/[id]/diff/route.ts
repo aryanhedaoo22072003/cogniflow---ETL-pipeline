@@ -52,6 +52,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       summary,
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

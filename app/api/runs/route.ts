@@ -11,6 +11,6 @@ export async function GET(req: NextRequest) {
     const runs = await Run.find({ ownerId }).sort({ createdAt: -1 }).limit(limit).lean();
     return NextResponse.json({ runs });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message, runs: [] }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message, runs: [] }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

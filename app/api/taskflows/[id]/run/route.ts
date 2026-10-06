@@ -36,6 +36,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ taskflowName: taskflow.name, status: overallStatus, results });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

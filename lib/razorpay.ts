@@ -5,10 +5,9 @@ export const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
-// Amounts are in paise (99900 = ₹999). Placeholder prices, change them.
 export const PLANS = {
-  pro: { name: "Cogniflow Pro", amount: 99900 },
-  team: { name: "Cogniflow Team", amount: 299900 },
+  pro: { name: "Cogniflow Pro", amount: 30000 },   // ₹300 / month
+  team: { name: "Cogniflow Team", amount: 60000 }, // ₹600 / month
 } as const;
 
 export type PlanId = keyof typeof PLANS;

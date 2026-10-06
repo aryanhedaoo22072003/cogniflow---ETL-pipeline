@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!taskflow || taskflow.ownerId !== ownerId) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ taskflow });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     );
     return NextResponse.json({ taskflow });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -47,6 +47,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await Taskflow.findByIdAndDelete(id);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

@@ -14,7 +14,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const schedule = await Schedule.findByIdAndUpdate(id, { enabled: body.enabled }, { new: true });
     return NextResponse.json({ schedule });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -28,6 +28,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await Schedule.findByIdAndDelete(id);
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

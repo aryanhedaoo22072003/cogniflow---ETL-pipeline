@@ -12,7 +12,7 @@ export async function GET() {
     const schedules = await Schedule.find({ ownerId }).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ schedules });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message, schedules: [] }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message, schedules: [] }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -54,6 +54,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ schedule }, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

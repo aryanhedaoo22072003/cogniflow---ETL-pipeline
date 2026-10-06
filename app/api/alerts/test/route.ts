@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ ok: false, error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

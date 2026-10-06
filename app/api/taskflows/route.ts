@@ -10,7 +10,7 @@ export async function GET() {
     const taskflows = await Taskflow.find({ ownerId }).sort({ updatedAt: -1 }).lean();
     return NextResponse.json({ taskflows });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message, taskflows: [] }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message, taskflows: [] }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
 
@@ -31,6 +31,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ taskflow }, { status: 201 });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }

@@ -108,6 +108,10 @@
 //   );
 // }
 
+
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { getAccess } from "@/lib/access";
 import Link from "next/link";
 import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
@@ -174,7 +178,11 @@ const orgSwitcherAppearance = {
   },
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth();
+  const access = userId ? await getAccess(userId) : null;
+  if (access && !access.allowed) redirect("/pricing");
+
   return (
     <div className="grid grid-cols-[220px_1fr] h-screen bg-[#F4F6FA] text-[#1A2233]">
       <div className="bg-[#111A2E] text-[#C4CBDC] p-3 flex flex-col">
@@ -217,11 +225,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-[#22304F] px-2.5">
-          <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
-          <span className="text-[11px] text-[#5B6480]">v0.6 · signed in</span>
-          <div className="ml-auto">
-            <NotificationCentre />
+
+        <div className="mt-auto">
+          {access && access.status !== "owner" && (
+            <Link
+              href="/pricing"
+              className="block mb-3 mx-1 rounded-lg bg-[#1B2740] border border-[#2A3752] px-3 py-2 text-[11.5px] text-[#C4CBDC] hover:bg-[#212D4C] transition-colors"
+            >
+              {access.status === "trial"
+                ? `Free trial · ${access.daysLeft} day${access.daysLeft === 1 ? "" : "s"} left`
+                : `${access.planId === "team" ? "Team" : "Pro"} plan · ${access.daysLeft} days left`}
+              <span className="block text-[#8B7FFF] mt-0.5">
+                {access.status === "trial" ? "Upgrade now →" : "Renew →"}
+              </span>
+            </Link>
+          )}
+
+          <div className="flex items-center gap-2.5 pt-3 border-t border-[#22304F] px-2.5">
+            <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
+            <span className="text-[11px] text-[#5B6480]">v0.6 · signed in</span>
+            <div className="ml-auto">
+              <NotificationCentre />
+            </div>
           </div>
         </div>
       </div>

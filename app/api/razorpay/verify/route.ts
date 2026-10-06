@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { razorpay } from "@/lib/razorpay";
+import { activatePlan } from "@/lib/subscriptions";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -24,8 +25,7 @@ export async function POST(req: Request) {
 
   const a = Buffer.from(expected);
   const b = Buffer.from(razorpay_signature);
-  const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
-  if (!valid) {
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 400 });
   }
 
@@ -37,9 +37,14 @@ export async function POST(req: Request) {
 
   const planId = order.notes?.planId as string;
 
-  // TODO: activate the plan in your DB. Make it idempotent:
-  // if this razorpay_payment_id is already recorded, do nothing.
-  // await activatePlan({ userId, planId, paymentId: razorpay_payment_id });
+  // 3. Save the payment and activate the plan
+  await activatePlan({
+    userId,
+    planId,
+    paymentId: razorpay_payment_id,
+    orderId: razorpay_order_id,
+    amount: Number(order.amount),
+  });
 
   return NextResponse.json({ ok: true, planId });
 }

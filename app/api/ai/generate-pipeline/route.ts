@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { profileColumns } from "@/lib/dataProfile";
-
+import { requireOwnerId } from "@/lib/auth";
 const ALLOWED_TYPES = [
   "filter", "rename", "dedupe", "nulls", "expression", "sequence",
   "sorter", "rank", "aggregator", "normalizer", "target",
@@ -43,6 +43,7 @@ Rules:
 
 export async function POST(req: NextRequest) {
   try {
+    await requireOwnerId();
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -127,6 +128,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ steps: safe });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json(
+      { error: e.message },
+      { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 }
+    );
   }
 }

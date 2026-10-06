@@ -18,6 +18,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await conn.save();
     return NextResponse.json({ connection: conn, testResult: result });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : 500 });
+    return NextResponse.json({ error: e.message }, { status: e.message === "Not authenticated" ? 401 : e.message === "Trial ended" ? 402 : 500 });
   }
 }
