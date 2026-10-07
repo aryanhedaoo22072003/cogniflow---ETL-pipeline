@@ -4,6 +4,7 @@ import crypto from "crypto";
 const ApiKeySchema = new Schema(
   {
     ownerId: { type: String, required: true, index: true },
+    createdBy: { type: String, index: true }, // Clerk userId of the person who created the key
     name: { type: String, required: true },
     keyHash: { type: String, required: true, unique: true },
     keyPrefix: { type: String, required: true },
@@ -12,7 +13,6 @@ const ApiKeySchema = new Schema(
   },
   { timestamps: true }
 );
-
 export function hashApiKey(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { connectDB } from "@/lib/mongodb";
 import ApiKey, { generateApiKey } from "@/models/ApiKey";
 import { requireOwnerId } from "@/lib/auth";
@@ -20,6 +21,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ownerId = await requireOwnerId();
+    const { userId } = await auth();
     await connectDB();
     const body = await req.json();
     if (!body.name?.trim()) return NextResponse.json({ error: "Key name is required" }, { status: 400 });
@@ -32,6 +34,7 @@ export async function POST(req: NextRequest) {
     const { raw, hash, prefix } = generateApiKey();
     await ApiKey.create({
       ownerId,
+      createdBy: userId,
       name: body.name.trim(),
       keyHash: hash,
       keyPrefix: prefix,
