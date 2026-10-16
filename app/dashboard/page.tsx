@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Workflow, Activity, Plug, ArrowRight, CheckCircle2, XCircle, Clock, TrendingUp, Zap, ListTree } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 interface Pipeline { _id: string; name: string; environment: string; nodes: any[]; updatedAt: string; }
 interface Run { _id: string; pipelineName: string; status: string; rowsOut: number; durationMs: number; environment: string; createdAt: string; }
@@ -20,7 +21,8 @@ function StatCard({ label, value, sub, color }: { label: string; value: string |
 }
 
 function fmt(ms: number) { return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`; }
-
+  const { user } = useUser();
+  const name = user?.firstName || user?.username || "there";
 export default function DashboardPage() {
   const router = useRouter();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
@@ -64,7 +66,8 @@ export default function DashboardPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5EEAD4] animate-pulse"/>
                 CogniFlow · Data Engineering Platform
               </div>
-              <h1 className="text-white text-[26px] font-bold leading-tight mb-3">Welcome back, Aryan</h1>
+              {/* <h1 className="text-white text-[26px] font-bold leading-tight mb-3">Welcome back, Aryan</h1> */}
+                            <h1 className="text-white text-[26px] font-bold leading-tight mb-3">Welcome back, {name}</h1>
               <p className="text-[#8B93AC] text-[13.5px] leading-relaxed mb-5">
                 Build, run, and monitor ETL pipelines — CSV to Postgres, API to warehouse, or anything in between. No code.
               </p>
