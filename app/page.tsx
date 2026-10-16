@@ -1531,12 +1531,16 @@ export default function LandingPage() {
       <section id="pricing" style={{ position:"relative",zIndex:10,padding:"80px 24px",maxWidth:1000,margin:"0 auto",textAlign:"center" }}>
         <p style={{ color:"#2F6FED",fontSize:12,fontWeight:600,letterSpacing:"0.15em",marginBottom:12 }}>PRICING</p>
         <h2 style={{ fontFamily:"'Space Grotesk'",fontSize:"clamp(32px,4vw,48px)",fontWeight:700,marginBottom:12 }}>Simple, honest pricing</h2>
-        <p style={{ color:"#8B93AC",fontSize:16,marginBottom:56 }}>Start free. Scale when you're ready.</p>
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20 }}>
+        {/* <p style={{ color:"#8B93AC",fontSize:16,marginBottom:56 }}>Start free. Scale when you're ready.</p> */}
+                <p style={{ color:"#8B93AC",fontSize:16,marginBottom:56 }}>7-day free trial, then pick a plan. No credit card needed to start.</p>
+        {/* <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20 }}> */}
+                <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:20,maxWidth:720,margin:"0 auto" }}>
           {[
-            { name:"Free", price:"₹0", period:"forever", color:"#2F6FED", features:["Unlimited pipelines","22+ transforms","AI data cleaning","Email alerts","Pipeline sharing","5 schedules","Community support"], cta:"Get started", href:"/sign-up", highlight:false },
-            { name:"Pro", price:"₹2,499", period:"/month", color:"#7C6AE8", features:["Everything in Free","Unlimited schedules","Priority email support","Version history (100)","Custom webhook triggers","API key management","Team workspace"], cta:"Start free trial", href:"/sign-up", highlight:true },
-            { name:"Enterprise", price:"Custom", period:"", color:"#10B981", features:["Everything in Pro","Dedicated instance","SLA guarantee","SSO / SAML","Custom transforms","On-premise deployment","Dedicated support"], cta:"Contact us", href:"mailto:aryanhedaoo2003@gmail.com", highlight:false },
+            // { name:"Free", price:"₹0", period:"forever", color:"#2F6FED", features:["Unlimited pipelines","22+ transforms","AI data cleaning","Email alerts","Pipeline sharing","5 schedules","Community support"], cta:"Get started", href:"/sign-up", highlight:false },
+            // { name:"Pro", price:"₹2,499", period:"/month", color:"#7C6AE8", features:["Everything in Free","Unlimited schedules","Priority email support","Version history (100)","Custom webhook triggers","API key management","Team workspace"], cta:"Start free trial", href:"/sign-up", highlight:true },
+            // { name:"Enterprise", price:"Custom", period:"", color:"#10B981", features:["Everything in Pro","Dedicated instance","SLA guarantee","SSO / SAML","Custom transforms","On-premise deployment","Dedicated support"], cta:"Contact us", href:"mailto:aryanhedaoo2003@gmail.com", highlight:false },
+                        { name:"Pro", price:"₹300", period:"/month · after 7-day free trial", color:"#7C6AE8", features:["Unlimited pipelines","22+ transforms","AI data cleaning","Schedules and email alerts","API key triggers","Version history","Pipeline sharing"], cta:"Start free trial", href:"/sign-up", highlight:true },
+            { name:"Team", price:"₹600", period:"/month · after 7-day free trial", color:"#2F6FED", features:["Everything in Pro","Built for groups and small teams","Priority support"], cta:"Start free trial", href:"/sign-up", highlight:false },
           ].map((p,i) => (
             <div key={i} className="card" style={{ padding:32,border:`1px solid ${p.highlight?"#7C6AE840":"#1A2740"}`,background:p.highlight?"linear-gradient(135deg,#110E1F,#0E1530)":"linear-gradient(135deg,#0B1220,#0D1830)",borderRadius:20,position:"relative",transition:"all 0.3s",boxShadow:p.highlight?"0 0 40px #7C6AE820":undefined }}>
               {p.highlight && <div style={{ position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"linear-gradient(135deg,#7C6AE8,#2F6FED)",color:"white",fontSize:11,fontWeight:700,padding:"4px 16px",borderRadius:20 }}>MOST POPULAR</div>}
