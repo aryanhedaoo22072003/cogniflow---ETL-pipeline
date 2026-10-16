@@ -21,9 +21,11 @@ function StatCard({ label, value, sub, color }: { label: string; value: string |
 }
 
 function fmt(ms: number) { return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`; }
+  // const { user } = useUser();
+  // const name = user?.firstName || user?.username || "there";
+export default function DashboardPage() {
   const { user } = useUser();
   const name = user?.firstName || user?.username || "there";
-export default function DashboardPage() {
   const router = useRouter();
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
