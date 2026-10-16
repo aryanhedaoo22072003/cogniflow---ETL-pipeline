@@ -108,7 +108,7 @@
 //   );
 // }
 
-
+import Logo from "@/components/Logo";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getAccess } from "@/lib/access";
@@ -186,11 +186,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="grid grid-cols-[220px_1fr] h-screen bg-[#F4F6FA] text-[#1A2233]">
       <div className="bg-[#111A2E] text-[#C4CBDC] p-3 flex flex-col">
-        <div className="flex items-center gap-2 px-2 pb-5 pt-2">
+        {/* <div className="flex items-center gap-2 px-2 pb-5 pt-2">
           <div className="w-[22px] h-[22px] rounded-md bg-gradient-to-br from-[#2F6FED] to-[#7C6AE8]" />
           <span className="text-white font-semibold text-[15px]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             CogniFlow
           </span>
+        </div> */}
+                <div className="px-2 pb-5 pt-2">
+          <Link href="/dashboard">
+            <Logo size={26} />
+          </Link>
         </div>
 
         <div className="mb-3 px-1">

@@ -1230,7 +1230,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-
+import Logo from "@/components/Logo";
 
 const FAQS = [
   { q:"Do I need to know how to code?", a:"No. CogniFlow is designed for data engineers who understand data — not developers who write code. Every transform is configured visually. That said, the Expression transform lets you write formulas if you want that control." },
@@ -1341,12 +1341,15 @@ export default function LandingPage() {
 
       {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:50,padding:"16px 40px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(5,8,16,0.85)",backdropFilter:"blur(24px)",borderBottom:"1px solid #0F1A30" }}>
-        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+        {/* <div style={{ display:"flex",alignItems:"center",gap:10 }}>
           <div style={{ width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#2F6FED,#7C6AE8)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 20px #2F6FED50" }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="4" cy="9" r="3" stroke="white" strokeWidth="1.5"/><circle cx="14" cy="9" r="3" stroke="white" strokeWidth="1.5"/><path d="M7 9h4" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </div>
           <span style={{ fontFamily:"'Space Grotesk'",fontWeight:700,fontSize:18 }}>CogniFlow</span>
-        </div>
+        </div> */}
+                <Link href="/" style={{ textDecoration:"none" }}>
+          <Logo size={36} glow />
+        </Link>
         <div style={{ display:"flex",gap:8,alignItems:"center" }}>
           <Link href="#features" style={{ color:"#8B93AC",textDecoration:"none",fontSize:14,fontWeight:500,padding:"8px 16px" }}>Features</Link>
           <Link href="#pricing" style={{ color:"#8B93AC",textDecoration:"none",fontSize:14,fontWeight:500,padding:"8px 16px" }}>Pricing</Link>
@@ -1589,8 +1592,9 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer style={{ position:"relative",zIndex:10,borderTop:"1px solid #0F1A30",padding:"32px 40px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:16 }}>
         <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-          <div style={{ width:30,height:30,borderRadius:8,background:"linear-gradient(135deg,#2F6FED,#7C6AE8)" }} />
-          <span style={{ fontFamily:"'Space Grotesk'",fontWeight:700,fontSize:16 }}>CogniFlow</span>
+          {/* <div style={{ width:30,height:30,borderRadius:8,background:"linear-gradient(135deg,#2F6FED,#7C6AE8)" }} />
+          <span style={{ fontFamily:"'Space Grotesk'",fontWeight:700,fontSize:16 }}>CogniFlow</span> */}
+                    <Logo size={30} />
           <span style={{ color:"#3A4558",fontSize:13 }}>· Data Engineering Platform</span>
         </div>
         <div style={{ color:"#3A4558",fontSize:13 }}>Built by Aryan Hedaoo · Pune, India</div>
